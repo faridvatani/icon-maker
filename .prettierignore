@@ -1,0 +1,6 @@
+/build/
+/test-config/
+.vscode
+node_modules
+dist
+.git
