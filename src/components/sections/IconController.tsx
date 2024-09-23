@@ -2,14 +2,14 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Smile } from "lucide-react";
 import { useEffect, useState } from "react";
-import { GradientPicker } from "../ui/GradientPicker";
+import { GradientPicker } from "@/components/ui/GradientPicker";
 
 export const IconController = () => {
   const [size, setSize] = useState<number>(280);
   const [rotate, setRotate] = useState<number>(0);
   const [color, setColor] = useState<string>("#B4D455");
 
-  const storageValue = JSON.parse(localStorage.getItem("values") || "{}");
+  const storageValue = JSON.parse(localStorage.getItem("value") || "{}");
   useEffect(() => {
     const updatedValue = {
       ...storageValue,
@@ -26,7 +26,7 @@ export const IconController = () => {
   return (
     <form className="grid w-full items-start gap-6">
       <fieldset className="grid gap-6 rounded-lg border p-4">
-        <legend className="-ml-1 px-1 text-sm font-medium">Dimensions</legend>
+        <legend className="-ml-1 px-1 text-sm font-medium">Properties</legend>
         <div className="grid gap-3">
           <Label htmlFor="icon">Icon</Label>
           <div
