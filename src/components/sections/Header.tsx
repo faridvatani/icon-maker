@@ -9,10 +9,14 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { IconController } from "@/components/sections/IconController";
+import { BackgroundController } from "@/components/sections/BackgroundController";
 
-export const Header = () => {
+interface HeaderProps {
+  selectedIndex: number;
+}
+
+export const Header = ({ selectedIndex }: HeaderProps) => {
   return (
     <header className="sticky top-0 z-10 flex h-[57px] items-center gap-1 border-b bg-background px-4">
       <h1 className="text-xl font-semibold">Icon Maker</h1>
@@ -27,28 +31,10 @@ export const Header = () => {
           <DrawerHeader>
             <DrawerTitle>Configuration</DrawerTitle>
             <DrawerDescription>
-              Configure the settings for the model and messages.
+              Configure the settings for the icon and background
             </DrawerDescription>
           </DrawerHeader>
-          <form className="grid w-full items-start gap-6 overflow-auto p-4 pt-0">
-            <fieldset className="grid gap-6 rounded-lg border p-4">
-              <legend className="-ml-1 px-1 text-sm font-medium">
-                Settings
-              </legend>
-              <div className="grid gap-3">
-                <Label htmlFor="temperature">Temperature</Label>
-                <Input id="temperature" type="number" placeholder="0.4" />
-              </div>
-              <div className="grid gap-3">
-                <Label htmlFor="top-p">Top P</Label>
-                <Input id="top-p" type="number" placeholder="0.7" />
-              </div>
-              <div className="grid gap-3">
-                <Label htmlFor="top-k">Top K</Label>
-                <Input id="top-k" type="number" placeholder="0.0" />
-              </div>
-            </fieldset>
-          </form>
+          {selectedIndex === 0 ? <IconController /> : <BackgroundController />}
         </DrawerContent>
       </Drawer>
       <Button variant="outline" size="sm" className="ml-auto gap-1.5 text-sm">
