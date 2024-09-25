@@ -1,27 +1,27 @@
+import { useEffect } from "react";
+import { Smile } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Smile } from "lucide-react";
-import { useEffect, useState } from "react";
 import { GradientPicker } from "@/components/ui/GradientPicker";
+import { useStorage } from "@/context/StorageContext";
 
 export const IconController = () => {
-  const [size, setSize] = useState<number>(280);
-  const [rotate, setRotate] = useState<number>(0);
-  const [color, setColor] = useState<string>("#B4D455");
+  const { storageValue, setStorageValue } = useStorage();
+  const iconSize = (storageValue.iconSize as number) ?? 280;
+  const iconRotate = (storageValue.iconRotate as number) ?? 0;
+  const iconColor = (storageValue.iconColor as string) ?? "#09203f";
 
-  const storageValue = JSON.parse(localStorage.getItem("value") || "{}");
   useEffect(() => {
     const updatedValue = {
       ...storageValue,
-      iconSize: size,
-      iconRotate: rotate,
-      iconColor: color,
-      icon: "smile",
+      iconSize,
+      iconRotate,
+      iconColor,
+      icon: "Smile",
     };
-    localStorage.setItem("value", JSON.stringify(updatedValue));
-
+    setStorageValue(updatedValue);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [size, rotate, color]);
+  }, [iconSize, iconRotate, iconColor]);
 
   return (
     <form className="grid w-full items-start gap-6">
@@ -38,35 +38,48 @@ export const IconController = () => {
         </div>
         <div className="grid gap-3">
           <Label htmlFor="size" className="flex justify-between items-center">
-            <span>Size</span> {size}px
+            <span>Size</span> {iconSize}px
           </Label>
           <Slider
             id="size"
             name="size"
-            defaultValue={[280]}
+            defaultValue={[iconSize]}
             max={512}
             step={1}
-            onValueChange={(event) => setSize(event[0])}
+            onValueChange={(value) =>
+              setStorageValue({ ...storageValue, iconSize: value[0] })
+            }
+            className="cursor-pointer"
           />
         </div>
         <div className="grid gap-3">
           <Label htmlFor="rotate" className="flex justify-between items-center">
-            <span>Rotate</span> {rotate}&deg;
+            <span>Rotate</span> {iconRotate}&deg;
           </Label>
           <Slider
             id="rotate"
             name="rotate"
-            defaultValue={[0]}
+            defaultValue={[iconRotate]}
             max={360}
             step={1}
-            onValueChange={(event) => setRotate(event[0])}
+            onValueChange={(value) =>
+              setStorageValue({ ...storageValue, iconRotate: value[0] })
+            }
+            className="cursor-pointer"
           />
         </div>
       </fieldset>
       <fieldset className="grid gap-6 rounded-lg border p-4">
         <legend className="-ml-1 px-1 text-sm font-medium">Colors</legend>
         <div className="grid gap-3">
-          <GradientPicker value={color} onChange={setColor} />
+          <GradientPicker
+            value={iconColor}
+            onChange={(value) =>
+              setStorageValue({ ...storageValue, iconColor: value })
+            }
+            hideGradient
+            hideImage
+          />
         </div>
       </fieldset>
     </form>

@@ -1,25 +1,26 @@
+import { useEffect } from "react";
+import { useStorage } from "@/context/StorageContext";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { useEffect, useState } from "react";
 import { GradientPicker } from "@/components/ui/GradientPicker";
 
 export const BackgroundController = () => {
-  const [rounded, setRounded] = useState<number>(0);
-  const [padding, setPadding] = useState<number>(0);
-  const [backgroundColor, setBackgroundColor] = useState<string>("#B4D455");
+  const { storageValue, setStorageValue } = useStorage();
+  const bgRounded = (storageValue.bgRounded as number) ?? 0;
+  const bgPadding = (storageValue.bgPadding as number) ?? 0;
+  const bgColor = (storageValue.bgColor as string) ?? "#E2E2E2";
 
-  const storageValue = JSON.parse(localStorage.getItem("value") || "{}");
   useEffect(() => {
     const updatedValue = {
       ...storageValue,
-      bgRounded: rounded,
-      bgPadding: padding,
-      bgColor: backgroundColor,
+      bgRounded,
+      bgPadding,
+      bgColor,
     };
-    localStorage.setItem("value", JSON.stringify(updatedValue));
+    setStorageValue(updatedValue);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rounded, padding, backgroundColor]);
+  }, [bgRounded, bgPadding, bgColor]);
 
   return (
     <form className="grid w-full items-start gap-6">
@@ -32,15 +33,18 @@ export const BackgroundController = () => {
             htmlFor="rounded"
             className="flex justify-between items-center"
           >
-            <span>Rounded</span> {rounded}px
+            <span>Rounded</span> {bgRounded}px
           </Label>
           <Slider
             id="rounded"
             name="rounded"
-            defaultValue={[0]}
+            defaultValue={[bgRounded]}
             max={512}
             step={1}
-            onValueChange={(event) => setRounded(event[0])}
+            onValueChange={(value) =>
+              setStorageValue({ ...storageValue, bgRounded: value[0] })
+            }
+            className="cursor-pointer"
           />
         </div>
         <div className="grid gap-3">
@@ -48,15 +52,18 @@ export const BackgroundController = () => {
             htmlFor="padding"
             className="flex justify-between items-center"
           >
-            <span>Padding</span> {padding}px
+            <span>Padding</span> {bgPadding}px
           </Label>
           <Slider
             id="padding"
             name="padding"
-            defaultValue={[40]}
+            defaultValue={[bgPadding]}
             max={100}
             step={1}
-            onValueChange={(event) => setPadding(event[0])}
+            onValueChange={(value) =>
+              setStorageValue({ ...storageValue, bgPadding: value[0] })
+            }
+            className="cursor-pointer"
           />
         </div>
       </fieldset>
@@ -64,8 +71,10 @@ export const BackgroundController = () => {
         <legend className="-ml-1 px-1 text-sm font-medium">Colors</legend>
         <div className="grid gap-3">
           <GradientPicker
-            value={backgroundColor}
-            onChange={setBackgroundColor}
+            value={bgColor}
+            onChange={(value) =>
+              setStorageValue({ ...storageValue, bgColor: value })
+            }
           />
         </div>
       </fieldset>
