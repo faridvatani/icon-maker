@@ -1,9 +1,9 @@
 import { useEffect } from "react";
-import { Smile } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { GradientPicker } from "@/components/ui/GradientPicker";
 import { useStorage } from "@/context/StorageContext";
+import { IconList } from "./IconList";
 
 export const IconController = () => {
   const { storageValue, setStorageValue } = useStorage();
@@ -17,7 +17,7 @@ export const IconController = () => {
       iconSize,
       iconRotate,
       iconColor,
-      icon: "Smile",
+      icon: storageValue.icon,
     };
     setStorageValue(updatedValue);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -28,13 +28,11 @@ export const IconController = () => {
       <fieldset className="grid gap-6 rounded-lg border p-4">
         <legend className="-ml-1 px-1 text-sm font-medium">Properties</legend>
         <div className="grid gap-3">
-          <Label htmlFor="icon">Icon</Label>
-          <div
-            id="icon"
-            className="w-12 h-12 p-2 border border-gray-300 rounded-lg cursor-pointer flex items-center justify-center"
-          >
-            <Smile />
-          </div>
+          <IconList
+            onIconSelect={(icon: string) =>
+              setStorageValue({ ...storageValue, icon })
+            }
+          />
         </div>
         <div className="grid gap-3">
           <Label htmlFor="size" className="flex justify-between items-center">
