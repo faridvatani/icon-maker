@@ -1,14 +1,13 @@
-import { Gem, Image, PencilRuler, Triangle } from "lucide-react";
+import { useState } from "react";
+import { twMerge } from "tailwind-merge";
+import { Image, PencilRuler, Triangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useState } from "react";
-import { twMerge } from "tailwind-merge";
 
 const SidebarItems = [
   {
@@ -18,10 +17,6 @@ const SidebarItems = [
   {
     label: "Background",
     icon: Image,
-  },
-  {
-    label: "Upgrade",
-    icon: Gem,
   },
 ];
 
