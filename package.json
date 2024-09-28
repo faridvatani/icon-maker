@@ -1,6 +1,7 @@
 {
   "name": "icon-maker",
-  "private": true,
+  "homepage": "https://github.com/faridvatani/icon-maker",
+  "private": false,
   "version": "1.0.0",
   "type": "module",
   "scripts": {
