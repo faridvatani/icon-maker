@@ -1,10 +1,66 @@
 # Icon Maker
 
-### React + TypeScript + Vite
+<img src="Screenshot.png" alt="screenshot">
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project allows users to select icons and customize their appearance by changing the color, size, and rotation. Additionally, users can modify the background settings, including rounded corners, padding, and background color.
 
-Currently, two official plugins are available:
+## Features
+
+- **Icon Customization**: Change the color, size, and rotation of icons.
+- **Background Settings**: Adjust rounded corners, padding, and background color.
+
+## Tech Stack
+
+- **Package Manager**: pnpm
+- **Build Tool**: Vite
+- **Library**: React
+- **Styling**: Tailwind CSS
+- **Language**: TypeScript
+- **UI Components**: Shadcn UI
+
+## Getting Started
+
+### Prerequisites
+
+Make sure you have the following installed:
+
+- Node.js (>= 14.18.0)
+- pnpm
+
+### Installation
+
+1. Clone the repository:
+
+   ```sh
+   git clone <repository-url>
+   cd icon-maker
+   ```
+
+2. Install dependencies:
+
+   ```sh
+   pnpm install
+   ```
+
+### Development
+
+To start the development server with hot module replacement:
+
+```sh
+pnpm dev
+```
+
+### Production
+
+To build the application for production:
+
+```sh
+pnpm build
+```
+
+## License
+
+This project is open source and available under the [MIT License](LICENSE).
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
 - [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
