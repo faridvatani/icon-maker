@@ -14,9 +14,10 @@ import { BackgroundController } from "@/components/sections/BackgroundController
 
 interface HeaderProps {
   selectedIndex: number;
+  downloadbtn: () => void;
 }
 
-export const Header = ({ selectedIndex }: HeaderProps) => {
+export const Header = ({ selectedIndex, downloadbtn }: HeaderProps) => {
   return (
     <header className="sticky top-0 z-10 flex h-[57px] items-center gap-1 border-b bg-background px-4">
       <h1 className="text-xl font-semibold">Icon Maker</h1>
@@ -37,7 +38,12 @@ export const Header = ({ selectedIndex }: HeaderProps) => {
           {selectedIndex === 0 ? <IconController /> : <BackgroundController />}
         </DrawerContent>
       </Drawer>
-      <Button variant="outline" size="sm" className="ml-auto gap-1.5 text-sm">
+      <Button
+        variant="outline"
+        size="sm"
+        className="ml-auto gap-1.5 text-sm"
+        onClick={downloadbtn}
+      >
         <Download className="size-4" />
         Download
       </Button>

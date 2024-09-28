@@ -10,12 +10,17 @@ import { LogoPreview } from "@/components/sections/LogoPreview";
 
 function App() {
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
+  const [downloadTrigger, setDownloadTrigger] = useState<number>(0);
+
+  const handleDownload = () => {
+    setDownloadTrigger(Date.now()); // Use a unique identifier
+  };
   return (
     <StorageProvider>
       <div className="grid h-screen w-full pl-[56px] antialiased">
         <Sidebar selectedSidebarItem={(value) => setSelectedIndex(value)} />
         <div className="flex flex-col">
-          <Header selectedIndex={selectedIndex} />
+          <Header selectedIndex={selectedIndex} downloadbtn={handleDownload} />
           <main className="grid flex-1 gap-4 overflow-auto p-4 md:grid-cols-2 lg:grid-cols-3">
             <section className="relative hidden flex-col items-start gap-8 md:flex">
               {selectedIndex === 0 ? (
@@ -29,7 +34,7 @@ function App() {
                 Output
               </Badge>
               <div className="flex-1">
-                <LogoPreview />
+                <LogoPreview downloadTrigger={downloadTrigger} />
               </div>
             </section>
           </main>
