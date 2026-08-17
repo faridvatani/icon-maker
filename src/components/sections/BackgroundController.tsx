@@ -1,6 +1,4 @@
-import { useEffect } from "react";
 import { useStorage } from "@/context/StorageContext";
-import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { GradientPicker } from "@/components/ui/GradientPicker";
 
@@ -10,18 +8,6 @@ export const BackgroundController = () => {
   const bgPadding = (storageValue.bgPadding as number) ?? 0;
   const bgColor = (storageValue.bgColor as string) ?? "#E2E2E2";
 
-  useEffect(() => {
-    const updatedValue = {
-      ...storageValue,
-      bgRounded,
-      bgPadding,
-      bgColor,
-    };
-    setStorageValue(updatedValue);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bgRounded, bgPadding, bgColor]);
-
   return (
     <form className="grid w-full items-start gap-6">
       <fieldset className="grid gap-6 rounded-lg border p-4">
@@ -29,14 +15,15 @@ export const BackgroundController = () => {
           Layout Styles
         </legend>
         <div className="grid gap-3">
-          <Label
-            htmlFor="rounded"
-            className="flex justify-between items-center"
+          <div
+            id="rounded-label"
+            className="flex justify-between items-center text-sm font-medium"
           >
             <span>Rounded</span> {bgRounded}px
-          </Label>
+          </div>
           <Slider
             id="rounded"
+            aria-labelledby="rounded-label"
             name="rounded"
             defaultValue={[bgRounded]}
             max={512}
@@ -48,14 +35,15 @@ export const BackgroundController = () => {
           />
         </div>
         <div className="grid gap-3">
-          <Label
-            htmlFor="padding"
-            className="flex justify-between items-center"
+          <div
+            id="padding-label"
+            className="flex justify-between items-center text-sm font-medium"
           >
             <span>Padding</span> {bgPadding}px
-          </Label>
+          </div>
           <Slider
             id="padding"
+            aria-labelledby="padding-label"
             name="padding"
             defaultValue={[bgPadding]}
             max={100}

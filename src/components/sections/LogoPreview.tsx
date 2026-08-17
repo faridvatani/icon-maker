@@ -1,15 +1,8 @@
-import { useEffect } from "react";
 import { useStorage } from "@/context/StorageContext";
 import Icon from "@/components/ui/Icon";
 
 export const LogoPreview = () => {
-  const { storageValue, setStorageValue } = useStorage();
-
-  useEffect(() => {
-    const value = JSON.parse(localStorage.getItem("value") || "{}");
-    setStorageValue(value);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storageValue]);
+  const { storageValue } = useStorage();
 
   return (
     <div className="flex items-center justify-center h-full w-full">

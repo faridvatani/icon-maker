@@ -16,7 +16,7 @@ interface IconListProps {
 
 export const IconList: React.FC<IconListProps> = ({ onIconSelect }) => {
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
-  const [currentIcon, setCurrentIcon] = useState<string>("Smile");
+  const [currentIcon, setCurrentIcon] = useState<string>("FaceSlightlySmiling");
 
   const handleIconClick = () => {
     setIsDialogOpen(true);
@@ -31,13 +31,15 @@ export const IconList: React.FC<IconListProps> = ({ onIconSelect }) => {
     <>
       <div>
         <Label htmlFor="icon">Icon</Label>
-        <div
+        <button
+          type="button"
           id="icon"
           onClick={handleIconClick}
+          aria-label="Choose an icon"
           className="w-12 h-12 p-2 border border-gray-300 rounded-lg cursor-pointer flex items-center justify-center"
         >
           <Icon name={currentIcon} />
-        </div>
+        </button>
       </div>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
@@ -47,14 +49,17 @@ export const IconList: React.FC<IconListProps> = ({ onIconSelect }) => {
               Choose from a wide range of icons to suit your needs.
             </DialogDescription>
             <div className="flex flex-wrap gap-4 overflow-auto p-4 h-96">
-              {iconList.map((icon, index) => (
-                <div
-                  key={index}
+              {iconList.map((icon) => (
+                <button
+                  type="button"
+                  key={icon}
+                  aria-label={`Select ${icon}`}
+                  title={icon}
                   className="w-12 h-12 p-2 border border-gray-300 rounded-lg cursor-pointer flex items-center justify-center"
                   onClick={() => handleIconSelect(icon)}
                 >
                   <Icon name={icon} />
-                </div>
+                </button>
               ))}
             </div>
           </DialogHeader>

@@ -1,5 +1,9 @@
 /build/
 /test-config/
+.agents/
+*.tsbuildinfo
+pnpm-lock.yaml
+skills-lock.json
 .vscode
 node_modules
 dist

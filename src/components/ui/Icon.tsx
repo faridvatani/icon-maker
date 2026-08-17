@@ -1,5 +1,6 @@
 import React from "react";
 import { icons } from "lucide-react";
+import { resolveIconName } from "@/lib/iconConstants";
 
 interface IconProps {
   name: string;
@@ -14,8 +15,7 @@ const Icon: React.FC<IconProps> = ({
   size = 24,
   rotate = 0,
 }) => {
-  const LucideIcon = icons[name as keyof typeof icons];
-  if (!LucideIcon) return null;
+  const LucideIcon = icons[resolveIconName(name)];
 
   return (
     <LucideIcon

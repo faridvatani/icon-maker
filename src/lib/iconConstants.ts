@@ -1,4 +1,33 @@
-export const iconList: string[] = [
+import { icons } from "lucide-react";
+
+const legacyIconAliases: Record<string, keyof typeof icons> = {
+  AlignCenter: "TextAlignCenter",
+  AlignJustify: "TextAlignJustify",
+  AlignLeft: "TextAlignStart",
+  AlignRight: "TextAlignEnd",
+  Angry: "FaceAngry",
+  Annoyed: "FaceExpressionless",
+  AreaChart: "ChartArea",
+  ArrowDownRightSquare: "SquareArrowDownRight",
+  ArrowLeftCircle: "CircleArrowLeft",
+  ArrowLeftSquare: "SquareArrowLeft",
+  ArrowRightCircle: "CircleArrowRight",
+  ArrowRightSquare: "SquareArrowRight",
+  ArrowUpCircle: "CircleArrowUp",
+  ArrowUpLeftFromCircle: "CircleArrowOutUpLeft",
+  ArrowUpLeftSquare: "SquareArrowUpLeft",
+  ArrowUpSquare: "SquareArrowUp",
+  Smile: "FaceSlightlySmiling",
+};
+
+export const resolveIconName = (name: string): keyof typeof icons => {
+  const resolvedName = legacyIconAliases[name] ?? name;
+  return resolvedName in icons
+    ? (resolvedName as keyof typeof icons)
+    : "CircleQuestionMark";
+};
+
+const requestedIcons = [
   "Accessibility",
   "Activity",
   "AirVent",
@@ -8,7 +37,7 @@ export const iconList: string[] = [
   "Album",
   "AlignCenterHorizontal",
   "AlignCenterVertical",
-  "AlignCenter",
+  "TextAlignCenter",
   "AlignEndHorizontal",
   "AlignEndVertical",
   "AlignHorizontalDistributeCenter",
@@ -19,9 +48,9 @@ export const iconList: string[] = [
   "AlignHorizontalJustifyStart",
   "AlignHorizontalSpaceAround",
   "AlignHorizontalSpaceBetween",
-  "AlignJustify",
-  "AlignLeft",
-  "AlignRight",
+  "TextAlignJustify",
+  "TextAlignStart",
+  "TextAlignEnd",
   "AlignStartHorizontal",
   "AlignStartVertical",
   "AlignVerticalDistributeCenter",
@@ -35,8 +64,8 @@ export const iconList: string[] = [
   "Ampersand",
   "Ampersands",
   "Anchor",
-  "Angry",
-  "Annoyed",
+  "FaceAngry",
+  "FaceExpressionless",
   "Antenna",
   "Aperture",
   "AppWindow",
@@ -44,7 +73,7 @@ export const iconList: string[] = [
   "ArchiveRestore",
   "ArchiveX",
   "Archive",
-  "AreaChart",
+  "ChartArea",
   "Armchair",
   "ArrowBigDownDash",
   "ArrowBigDown",
@@ -60,7 +89,7 @@ export const iconList: string[] = [
   "ArrowDownFromLine",
   "ArrowDownLeft",
   "ArrowDownNarrowWide",
-  "ArrowDownRightSquare",
+  "SquareArrowDownRight",
   "ArrowDownRight",
   "ArrowDownToDot",
   "ArrowDownToLine",
@@ -68,31 +97,31 @@ export const iconList: string[] = [
   "ArrowDownWideNarrow",
   "ArrowDownZA",
   "ArrowDown",
-  "ArrowLeftCircle",
+  "CircleArrowLeft",
   "ArrowLeftFromLine",
   "ArrowLeftRight",
-  "ArrowLeftSquare",
+  "SquareArrowLeft",
   "ArrowLeftToLine",
   "ArrowLeft",
-  "ArrowRightCircle",
+  "CircleArrowRight",
   "ArrowRightFromLine",
   "ArrowRightLeft",
-  "ArrowRightSquare",
+  "SquareArrowRight",
   "ArrowRightToLine",
   "ArrowRight",
   "ArrowUp01",
   "ArrowUp10",
   "ArrowUpAZ",
-  "ArrowUpCircle",
+  "CircleArrowUp",
   "ArrowUpDown",
   "ArrowUpFromDot",
   "ArrowUpFromLine",
-  "ArrowUpLeftFromCircle",
-  "ArrowUpLeftSquare",
+  "CircleArrowOutUpLeft",
+  "SquareArrowUpLeft",
   "ArrowUpLeft",
   "ArrowUpNarrowWide",
   "ArrowUpRight",
-  "ArrowUpSquare",
+  "SquareArrowUp",
   "ArrowUpToLine",
   "ArrowUpWideNarrow",
   "ArrowUpZA",
@@ -104,4 +133,10 @@ export const iconList: string[] = [
   "Award",
   "Axe",
   "Axis3d",
-];
+] as const;
+
+// Lucide occasionally renames icons. Never render a picker tile for an export
+// that is not present in the installed version of the library.
+export const iconList: string[] = requestedIcons.filter(
+  (name) => name in icons,
+);

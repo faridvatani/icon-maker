@@ -27,7 +27,7 @@ export default [
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": [
         "warn",
-        { allowConstantExport: true },
+        { allowConstantExport: true, allowExportNames: ["useStorage"] },
       ],
       "prettier/prettier": "error",
     },
