@@ -1,23 +1,25 @@
 import { Slider } from "@/components/ui/slider";
-import { GradientPicker } from "@/components/ui/GradientPicker";
-import { useStorage } from "@/context/StorageContext";
-import { IconList } from "./IconList";
+import { SolidColorPicker } from "@/features/editor/components/SolidColorPicker";
+import { useStorage } from "@/features/editor/state/EditorSettingsContext";
+import { IconList } from "@/features/editor/components/IconList";
 
 export const IconController = () => {
-  const { storageValue, setStorageValue } = useStorage();
-  const iconSize = (storageValue.iconSize as number) ?? 280;
-  const iconRotate = (storageValue.iconRotate as number) ?? 0;
-  const iconColor = (storageValue.iconColor as string) ?? "#09203f";
+  const {
+    storageValue,
+    updateStorageValue,
+    previewStorageValue,
+    commitStorageValue,
+  } = useStorage();
+  const { icon, iconSize, iconRotate, iconColor } = storageValue;
 
   return (
-    <form className="grid w-full items-start gap-6">
+    <div className="grid w-full items-start gap-6">
       <fieldset className="grid gap-6 rounded-lg border p-4">
         <legend className="-ml-1 px-1 text-sm font-medium">Properties</legend>
         <div className="grid gap-3">
           <IconList
-            onIconSelect={(icon: string) =>
-              setStorageValue({ ...storageValue, icon })
-            }
+            value={icon}
+            onIconSelect={(icon) => updateStorageValue({ icon })}
           />
         </div>
         <div className="grid gap-3">
@@ -31,12 +33,13 @@ export const IconController = () => {
             id="size"
             aria-labelledby="size-label"
             name="size"
-            defaultValue={[iconSize]}
+            value={[iconSize]}
             max={512}
             step={1}
             onValueChange={(value) =>
-              setStorageValue({ ...storageValue, iconSize: value[0] })
+              previewStorageValue({ iconSize: value[0] })
             }
+            onValueCommit={commitStorageValue}
             className="cursor-pointer"
           />
         </div>
@@ -51,12 +54,13 @@ export const IconController = () => {
             id="rotate"
             aria-labelledby="rotate-label"
             name="rotate"
-            defaultValue={[iconRotate]}
+            value={[iconRotate]}
             max={360}
             step={1}
             onValueChange={(value) =>
-              setStorageValue({ ...storageValue, iconRotate: value[0] })
+              previewStorageValue({ iconRotate: value[0] })
             }
+            onValueCommit={commitStorageValue}
             className="cursor-pointer"
           />
         </div>
@@ -64,16 +68,12 @@ export const IconController = () => {
       <fieldset className="grid gap-6 rounded-lg border p-4">
         <legend className="-ml-1 px-1 text-sm font-medium">Colors</legend>
         <div className="grid gap-3">
-          <GradientPicker
+          <SolidColorPicker
             value={iconColor}
-            onChange={(value) =>
-              setStorageValue({ ...storageValue, iconColor: value })
-            }
-            hideGradient
-            hideImage
+            onChange={(iconColor) => updateStorageValue({ iconColor })}
           />
         </div>
       </fieldset>
-    </form>
+    </div>
   );
 };

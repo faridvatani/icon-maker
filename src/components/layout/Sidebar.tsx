@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { twMerge } from "tailwind-merge";
 import { Image, PencilRuler, Triangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,17 +20,11 @@ const SidebarItems = [
 ];
 
 interface SidebarProps {
-  selectedSidebarItem: (index: number) => void;
+  value: number;
+  onValueChange: (index: number) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ selectedSidebarItem }) => {
-  const [active, setActive] = useState<number>(0);
-
-  const handleActive = (index: number) => {
-    setActive(index);
-    selectedSidebarItem(index);
-  };
-
+export const Sidebar: React.FC<SidebarProps> = ({ value, onValueChange }) => {
   return (
     <aside className="inset-y fixed left-0 z-20 flex h-full flex-col border-r">
       <div className="border-b p-2">
@@ -42,21 +35,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedSidebarItem }) => {
       <nav className="grid gap-1 p-2">
         <TooltipProvider>
           {SidebarItems.map((item, index) => (
-            <Tooltip key={index}>
+            <Tooltip key={item.label}>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
                   className={twMerge(
                     "rounded-lg hover:bg-muted",
-                    active === index ? "bg-muted" : "",
+                    value === index ? "bg-muted" : "",
                   )}
                   aria-label={item.label}
-                  onClick={() => handleActive(index)}
+                  onClick={() => onValueChange(index)}
                 >
                   <item.icon
                     className={`size-5 ${
-                      active === index ? "text-gray-900" : "text-gray-500"
+                      value === index ? "text-gray-900" : "text-gray-500"
                     }`}
                   />
                 </Button>

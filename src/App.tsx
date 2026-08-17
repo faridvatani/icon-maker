@@ -1,19 +1,67 @@
-import { useState } from "react";
-import { StorageProvider } from "./context/StorageContext";
-import { Header } from "@/components/sections/Header";
-import { Sidebar } from "@/components/sections/Sidebar";
+import { lazy, Suspense, useEffect, useState } from "react";
+import {
+  StorageProvider,
+  useStorage,
+} from "@/features/editor/state/EditorSettingsContext";
+import { Header } from "@/components/layout/Header";
+import { Sidebar } from "@/components/layout/Sidebar";
 import { Badge } from "@/components/ui/badge";
 
-import { IconController } from "@/components/sections/IconController";
-import { BackgroundController } from "@/components/sections/BackgroundController";
-import { LogoPreview } from "@/components/sections/LogoPreview";
+import { IconController } from "@/features/editor/components/IconController";
+import { LogoPreview } from "@/features/editor/components/LogoPreview";
+import { defaultEditorSettings } from "@/features/editor/lib/editorSettings";
+import { parseSharedSettings } from "@/features/editor/lib/share";
+
+const BackgroundController = lazy(() =>
+  import("@/features/editor/components/BackgroundController").then(
+    (module) => ({
+      default: module.BackgroundController,
+    }),
+  ),
+);
+
+function SharedDesignLoader() {
+  const { applySettings } = useStorage();
+  const hasSharedDesign = new URLSearchParams(window.location.search).has(
+    "design",
+  );
+  const [sharedDesign] = useState(() => {
+    return hasSharedDesign
+      ? parseSharedSettings(window.location.search)
+      : undefined;
+  });
+
+  useEffect(() => {
+    if (sharedDesign) {
+      applySettings(sharedDesign);
+    } else if (hasSharedDesign) {
+      applySettings(defaultEditorSettings);
+    }
+  }, [applySettings, hasSharedDesign, sharedDesign]);
+
+  const message = sharedDesign
+    ? "Shared design loaded. You can undo this change."
+    : hasSharedDesign
+      ? "This shared design could not be loaded."
+      : "";
+
+  return message ? (
+    <div
+      role="status"
+      className="fixed bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full border bg-background px-4 py-2 text-sm shadow-lg"
+    >
+      {message}
+    </div>
+  ) : null;
+}
 
 function App() {
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
   return (
     <StorageProvider>
-      <div className="grid h-screen w-full pl-[56px] antialiased">
-        <Sidebar selectedSidebarItem={(value) => setSelectedIndex(value)} />
+      <SharedDesignLoader />
+      <div className="grid h-screen w-full pl-14 antialiased">
+        <Sidebar value={selectedIndex} onValueChange={setSelectedIndex} />
         <div className="flex flex-col">
           <Header selectedIndex={selectedIndex} />
           <main className="grid flex-1 gap-4 overflow-auto p-4 md:grid-cols-2 lg:grid-cols-3">
@@ -21,7 +69,9 @@ function App() {
               {selectedIndex === 0 ? (
                 <IconController />
               ) : (
-                <BackgroundController />
+                <Suspense fallback={null}>
+                  <BackgroundController />
+                </Suspense>
               )}
             </section>
             <section className="relative flex h-full min-h-[50vh] flex-col rounded-xl bg-muted/50 p-4 lg:col-span-2">

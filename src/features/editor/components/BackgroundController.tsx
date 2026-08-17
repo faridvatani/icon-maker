@@ -1,15 +1,18 @@
-import { useStorage } from "@/context/StorageContext";
+import { useStorage } from "@/features/editor/state/EditorSettingsContext";
 import { Slider } from "@/components/ui/slider";
-import { GradientPicker } from "@/components/ui/GradientPicker";
+import { GradientPicker } from "@/features/editor/components/GradientPicker";
 
 export const BackgroundController = () => {
-  const { storageValue, setStorageValue } = useStorage();
-  const bgRounded = (storageValue.bgRounded as number) ?? 0;
-  const bgPadding = (storageValue.bgPadding as number) ?? 0;
-  const bgColor = (storageValue.bgColor as string) ?? "#E2E2E2";
+  const {
+    storageValue,
+    updateStorageValue,
+    previewStorageValue,
+    commitStorageValue,
+  } = useStorage();
+  const { bgRounded, bgPadding, bgColor, bgGradientId } = storageValue;
 
   return (
-    <form className="grid w-full items-start gap-6">
+    <div className="grid w-full items-start gap-6">
       <fieldset className="grid gap-6 rounded-lg border p-4">
         <legend className="-ml-1 px-1 text-sm font-medium">
           Layout Styles
@@ -25,12 +28,13 @@ export const BackgroundController = () => {
             id="rounded"
             aria-labelledby="rounded-label"
             name="rounded"
-            defaultValue={[bgRounded]}
+            value={[bgRounded]}
             max={512}
             step={1}
             onValueChange={(value) =>
-              setStorageValue({ ...storageValue, bgRounded: value[0] })
+              previewStorageValue({ bgRounded: value[0] })
             }
+            onValueCommit={commitStorageValue}
             className="cursor-pointer"
           />
         </div>
@@ -45,12 +49,13 @@ export const BackgroundController = () => {
             id="padding"
             aria-labelledby="padding-label"
             name="padding"
-            defaultValue={[bgPadding]}
+            value={[bgPadding]}
             max={100}
             step={1}
             onValueChange={(value) =>
-              setStorageValue({ ...storageValue, bgPadding: value[0] })
+              previewStorageValue({ bgPadding: value[0] })
             }
+            onValueCommit={commitStorageValue}
             className="cursor-pointer"
           />
         </div>
@@ -60,12 +65,16 @@ export const BackgroundController = () => {
         <div className="grid gap-3">
           <GradientPicker
             value={bgColor}
+            gradientValue={bgGradientId}
             onChange={(value) =>
-              setStorageValue({ ...storageValue, bgColor: value })
+              updateStorageValue({ bgColor: value, bgGradientId: null })
+            }
+            onGradientChange={(bgGradientId) =>
+              updateStorageValue({ bgGradientId })
             }
           />
         </div>
       </fieldset>
-    </form>
+    </div>
   );
 };
