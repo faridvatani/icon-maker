@@ -24,8 +24,8 @@ This project allows users to select icons and customize their appearance by chan
 
 Make sure you have the following installed:
 
-- Node.js (>= 14.18.0)
-- pnpm
+- Node.js 26.7.0
+- pnpm 11.22.0
 
 ### Installation
 

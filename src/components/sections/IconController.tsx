@@ -1,5 +1,3 @@
-import { useEffect } from "react";
-import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { GradientPicker } from "@/components/ui/GradientPicker";
 import { useStorage } from "@/context/StorageContext";
@@ -10,18 +8,6 @@ export const IconController = () => {
   const iconSize = (storageValue.iconSize as number) ?? 280;
   const iconRotate = (storageValue.iconRotate as number) ?? 0;
   const iconColor = (storageValue.iconColor as string) ?? "#09203f";
-
-  useEffect(() => {
-    const updatedValue = {
-      ...storageValue,
-      iconSize,
-      iconRotate,
-      iconColor,
-      icon: storageValue.icon,
-    };
-    setStorageValue(updatedValue);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [iconSize, iconRotate, iconColor]);
 
   return (
     <form className="grid w-full items-start gap-6">
@@ -35,11 +21,15 @@ export const IconController = () => {
           />
         </div>
         <div className="grid gap-3">
-          <Label htmlFor="size" className="flex justify-between items-center">
+          <div
+            id="size-label"
+            className="flex justify-between items-center text-sm font-medium"
+          >
             <span>Size</span> {iconSize}px
-          </Label>
+          </div>
           <Slider
             id="size"
+            aria-labelledby="size-label"
             name="size"
             defaultValue={[iconSize]}
             max={512}
@@ -51,11 +41,15 @@ export const IconController = () => {
           />
         </div>
         <div className="grid gap-3">
-          <Label htmlFor="rotate" className="flex justify-between items-center">
+          <div
+            id="rotate-label"
+            className="flex justify-between items-center text-sm font-medium"
+          >
             <span>Rotate</span> {iconRotate}&deg;
-          </Label>
+          </div>
           <Slider
             id="rotate"
+            aria-labelledby="rotate-label"
             name="rotate"
             defaultValue={[iconRotate]}
             max={360}
