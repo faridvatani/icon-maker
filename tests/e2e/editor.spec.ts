@@ -594,15 +594,22 @@ test("suppresses editor shortcuts while a modal or editable control owns focus",
 
   await page.keyboard.press("Escape");
   await page.getByRole("slider", { name: "Size" }).press("ArrowRight");
-  const resetTrigger = page.getByRole("button", { name: "Reset settings" });
+  const resetTrigger = page
+    .getByRole("banner")
+    .getByRole("button", { name: "Reset settings" });
   await resetTrigger.click();
-  await expect(page.getByRole("alertdialog")).toBeVisible();
+  const resetDialog = page.getByRole("alertdialog");
+  await expect(resetDialog).toBeVisible();
+  await expect(
+    resetDialog.getByRole("button", { name: "Cancel" }),
+  ).toBeFocused();
   await page.keyboard.press("e");
-  await expect(page.getByRole("alertdialog")).toBeVisible();
+  await expect(resetDialog).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Advanced export" }),
   ).toHaveCount(0);
   await page.keyboard.press("Escape");
+  await expect(page.getByRole("alertdialog")).toHaveCount(0);
   await expect(resetTrigger).toBeFocused();
 
   for (const editable of [
@@ -663,8 +670,13 @@ test("confirms destructive saved-design and brand-kit deletion", async ({
   await page.getByRole("button", { name: "Save", exact: true }).click();
   const deletePreset = page.getByRole("button", { name: "Delete Keep me" });
   await deletePreset.click();
-  await expect(page.getByRole("alertdialog")).toContainText("Keep me");
+  const deleteDialog = page.getByRole("alertdialog");
+  await expect(deleteDialog).toContainText("Keep me");
+  await expect(
+    deleteDialog.getByRole("button", { name: "Cancel" }),
+  ).toBeFocused();
   await page.keyboard.press("Escape");
+  await expect(page.getByRole("alertdialog")).toHaveCount(0);
   await expect(deletePreset).toBeFocused();
   await expect(
     page.getByRole("button", { name: "Keep me", exact: true }),

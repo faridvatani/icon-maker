@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Download, Loader2, Settings2 } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { motion } from "motion/react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -80,24 +80,23 @@ export function QuickExportButton({ className }: { className?: string }) {
       onFocus={preloadPngExporter}
       onClick={() => void exportQuickPng()}
       disabled={state === "exporting"}
+      aria-label={statusLabel}
+      aria-busy={state === "exporting"}
     >
-      <AnimatePresence initial={false} mode="wait">
-        <motion.span
-          key={state}
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -4 }}
-          transition={{ duration: 0.14, ease: "easeOut" }}
-          className="flex items-center gap-1.5"
-        >
-          {state === "exporting" ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Download className="size-4" />
-          )}
-          {statusLabel}
-        </motion.span>
-      </AnimatePresence>
+      <motion.span
+        key={state}
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.14, ease: "easeOut" }}
+        className="flex items-center gap-1.5"
+      >
+        {state === "exporting" ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <Download className="size-4" />
+        )}
+        {statusLabel}
+      </motion.span>
       <span role="status" className="sr-only" aria-live="polite">
         {announcement}
       </span>
