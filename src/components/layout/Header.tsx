@@ -20,7 +20,7 @@ export const Header = () => {
     useStorage();
   const { copyShareLink, shareState } = useShareLink();
   return (
-    <header className="sticky top-0 z-10 flex h-14.25 items-center border-b bg-background/95 px-4 backdrop-blur">
+    <header className="sticky top-0 z-10 flex h-14 items-center border-b bg-background/95 px-4 backdrop-blur">
       <div>
         <h1 className="text-lg font-semibold tracking-tight sm:text-xl">
           Icon Maker

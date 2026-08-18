@@ -86,7 +86,7 @@ function SidebarButton({
 
 export const Sidebar: React.FC<SidebarProps> = ({ value, onValueChange }) => (
   <aside className="inset-y fixed left-0 z-20 hidden h-full w-14 flex-col border-r bg-background md:flex">
-    <div className="border-b p-2">
+    <div className="border-b p-2 h-14">
       <div
         className="flex size-9 items-center justify-center rounded-md border"
         aria-hidden="true"
