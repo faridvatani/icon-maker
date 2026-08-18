@@ -64,3 +64,12 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .artboard-grid {
+    background-image:
+      linear-gradient(to right, hsl(var(--border) / 0.45) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.45) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+}

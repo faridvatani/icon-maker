@@ -34,8 +34,31 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build project
-        run: pnpm run build
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Run unit tests
+        run: pnpm test:unit
+
+      - name: Run component tests
+        run: pnpm test:component
+
+      - name: Build production application
+        run: pnpm build
+
+      - name: Install browsers
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
+
+      - name: Run browser tests
+        run: pnpm test:e2e
+        env:
+          PLAYWRIGHT_PREBUILT: "true"
 
       - name: Setup Pages
         uses: actions/configure-pages@v6

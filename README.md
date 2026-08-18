@@ -1,108 +1,64 @@
 # Icon Maker
 
-<img src="Screenshot.png" alt="screenshot">
+A focused browser editor for creating polished square icon assets. Choose an
+icon, tune its appearance, pair it with a solid color, local image, or layered
+gradient, and export a production-size PNG.
 
-This project allows users to select icons and customize their appearance by changing the color, size, and rotation. Additionally, users can modify the background settings, including rounded corners, padding, and background color.
+![Icon Maker interface](Screenshot.png)
 
-## Features
+## Highlights
 
-- **Icon Customization**: Change the color, size, and rotation of icons.
-- **Background Settings**: Adjust rounded corners, padding, and background color.
+- Searchable, on-demand catalog with 1,767 icons
+- 206 locally bundled layered gradients with no runtime network dependency
+- Solid colors and bundled image backgrounds
+- Live size, rotation, padding, corner-radius, icon, and background-effect controls
+- Smart contrast guidance with one-click icon-color suggestions
+- Undo, redo, reset, and a discoverable keyboard-shortcut overlay
+- Local SVG icon import with strict sanitization and device-only storage
+- ZIP export for standard app/avatar canvases or custom 16–4096px square assets, including transparent variants
+- Browser-local named presets, brand kits, recents, and share links for built-in designs
+- Versioned local persistence with validated settings
+- Installable PWA with network-first updates, responsive controls, and mobile bottom sheets
 
-## Tech Stack
+## Stack
 
-- **Package Manager**: pnpm
-- **Build Tool**: Vite
-- **Library**: React
-- **Styling**: Tailwind CSS
-- **Language**: TypeScript
-- **UI Components**: Shadcn UI
+- React 19 and TypeScript
+- Vite 8
+- Tailwind CSS 4
+- Radix UI primitives
+- Lucide icons
+- `html-to-image` for browser-native export
+- pnpm
 
-## Getting Started
+## Local development
 
-### Prerequisites
-
-Make sure you have the following installed:
-
-- Node.js 26.7.0
-- pnpm 11.22.0
-
-### Installation
-
-1. Clone the repository:
-
-   ```sh
-   git clone <repository-url>
-   cd icon-maker
-   ```
-
-2. Install dependencies:
-
-   ```sh
-   pnpm install
-   ```
-
-### Development
-
-To start the development server with hot module replacement:
+Use Node.js 26.7.0 and pnpm 11.22.0.
 
 ```sh
+pnpm install
 pnpm dev
 ```
 
-### Production
+## Quality checks
 
-To build the application for production:
+Run all checks before you merge a change:
 
 ```sh
+pnpm format:check
+pnpm lint
+pnpm test
+pnpm test:e2e
 pnpm build
 ```
 
-## License
+## Production preview
 
-This project is open source and available under the [MIT License](LICENSE).
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-});
+```sh
+pnpm build
+pnpm preview
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## Third-party notices
 
-```js
-// eslint.config.js
-import react from "eslint-plugin-react";
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: "18.3" } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs["jsx-runtime"].rules,
-  },
-});
-```
+See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for bundled asset license
+information.
