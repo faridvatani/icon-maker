@@ -6,8 +6,14 @@ import {
   PencilRuler,
   Triangle,
 } from "lucide-react";
+import type { MouseEventHandler } from "react";
+import { motion } from "motion/react";
 import { twMerge } from "tailwind-merge";
 import { Button } from "@/components/ui/button";
+import {
+  dispatchEditorEvent,
+  editorEvent,
+} from "@/features/editor/lib/editorEvents";
 import {
   Tooltip,
   TooltipContent,
@@ -23,9 +29,9 @@ const libraryItems = [
   {
     label: "Saved designs",
     icon: Bookmark,
-    event: "icon-maker:open-saved-designs",
+    event: editorEvent.openSavedDesigns,
   },
-  { label: "Brand kits", icon: Palette, event: "icon-maker:open-brand-kits" },
+  { label: "Brand kits", icon: Palette, event: editorEvent.openBrandKits },
 ];
 
 interface SidebarProps {
@@ -42,7 +48,7 @@ function SidebarButton({
   label: string;
   icon: typeof PencilRuler;
   active?: boolean;
-  onClick: () => void;
+  onClick: MouseEventHandler<HTMLButtonElement>;
 }) {
   return (
     <Tooltip>
@@ -51,15 +57,21 @@ function SidebarButton({
           variant="ghost"
           size="icon"
           className={twMerge(
-            "rounded-lg hover:bg-muted",
-            active ? "bg-muted" : "",
+            "relative overflow-hidden rounded-lg hover:bg-muted",
           )}
           aria-label={label}
           onClick={onClick}
         >
+          {active ? (
+            <motion.span
+              layoutId="active-editor-panel"
+              className="pointer-events-none absolute inset-0 rounded-lg bg-muted"
+              transition={{ type: "spring", stiffness: 420, damping: 34 }}
+            />
+          ) : null}
           <Icon
             className={twMerge(
-              "size-5 text-muted-foreground",
+              "relative size-5 text-muted-foreground",
               active ? "text-foreground" : "",
             )}
           />
@@ -73,11 +85,14 @@ function SidebarButton({
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ value, onValueChange }) => (
-  <aside className="inset-y fixed left-0 z-20 flex h-full w-14 flex-col border-r bg-background">
+  <aside className="inset-y fixed left-0 z-20 hidden h-full w-14 flex-col border-r bg-background md:flex">
     <div className="border-b p-2">
-      <Button variant="outline" size="icon" aria-label="Home">
+      <div
+        className="flex size-9 items-center justify-center rounded-md border"
+        aria-hidden="true"
+      >
         <Triangle className="size-5 fill-foreground" />
-      </Button>
+      </div>
     </div>
     <TooltipProvider>
       <nav aria-label="Editor sections" className="grid gap-1 p-2">
@@ -96,7 +111,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ value, onValueChange }) => (
             key={item.label}
             label={item.label}
             icon={item.icon}
-            onClick={() => window.dispatchEvent(new Event(item.event))}
+            onClick={(event) =>
+              dispatchEditorEvent(item.event, event.currentTarget)
+            }
           />
         ))}
       </nav>
@@ -104,8 +121,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ value, onValueChange }) => (
         <SidebarButton
           label="Keyboard shortcuts"
           icon={Keyboard}
-          onClick={() =>
-            window.dispatchEvent(new Event("icon-maker:open-shortcuts"))
+          onClick={(event) =>
+            dispatchEditorEvent(editorEvent.openShortcuts, event.currentTarget)
           }
         />
       </div>

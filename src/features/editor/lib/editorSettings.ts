@@ -7,14 +7,22 @@ import {
   type BackgroundEffects,
   type IconEffects,
 } from "./effects";
+import {
+  normalizeBackgroundValue,
+  normalizeGradientId,
+  normalizeHexColor,
+  type BackgroundValue,
+  type GradientId,
+  type HexColor,
+} from "./styleValues";
 
 export interface EditorSettings {
   icon: IconValue;
-  iconColor: string;
+  iconColor: HexColor;
   iconSize: number;
   iconRotate: number;
-  bgColor: string;
-  bgGradientId: string | null;
+  bgColor: BackgroundValue;
+  bgGradientId: GradientId | null;
   bgRounded: number;
   bgPadding: number;
   iconEffects: IconEffects;
@@ -34,9 +42,6 @@ export const defaultEditorSettings: EditorSettings = {
   backgroundEffects: defaultBackgroundEffects,
 };
 
-const readString = (value: unknown, fallback: string) =>
-  typeof value === "string" ? value : fallback;
-
 const readNumber = (
   value: unknown,
   fallback: number,
@@ -51,17 +56,12 @@ export const sanitizeEditorSettings = (value: unknown): EditorSettings => {
   if (!value || typeof value !== "object") return defaultEditorSettings;
 
   const stored = value as Record<string, unknown>;
-  const storedBackground = readString(
-    stored.bgColor,
-    defaultEditorSettings.bgColor,
-  );
-  const bgColor = storedBackground.includes("images.unsplash.com")
-    ? `url("${import.meta.env.BASE_URL}backgrounds/nebula.svg")`
-    : storedBackground;
-
   return {
     icon: normalizeIconValue(stored.icon),
-    iconColor: readString(stored.iconColor, defaultEditorSettings.iconColor),
+    iconColor: normalizeHexColor(
+      stored.iconColor,
+      defaultEditorSettings.iconColor,
+    ),
     iconSize: readNumber(
       stored.iconSize,
       defaultEditorSettings.iconSize,
@@ -74,9 +74,11 @@ export const sanitizeEditorSettings = (value: unknown): EditorSettings => {
       0,
       360,
     ),
-    bgColor,
-    bgGradientId:
-      typeof stored.bgGradientId === "string" ? stored.bgGradientId : null,
+    bgColor: normalizeBackgroundValue(
+      stored.bgColor,
+      defaultEditorSettings.bgColor,
+    ),
+    bgGradientId: normalizeGradientId(stored.bgGradientId),
     bgRounded: readNumber(
       stored.bgRounded,
       defaultEditorSettings.bgRounded,

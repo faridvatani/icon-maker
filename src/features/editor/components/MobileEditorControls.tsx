@@ -20,12 +20,17 @@ import {
   DrawerDescription,
   DrawerHeader,
   DrawerTitle,
+  DrawerTrigger,
 } from "@/components/ui/drawer";
 import { IconController } from "@/features/editor/components/IconController";
 import { BackgroundController } from "@/features/editor/components/BackgroundController";
 import { useStorage } from "@/features/editor/state/EditorSettingsContext";
 import { isCustomIconValue } from "@/features/editor/lib/iconTypes";
-import { createShareUrl } from "@/features/editor/lib/share";
+import {
+  dispatchEditorEvent,
+  editorEvent,
+} from "@/features/editor/lib/editorEvents";
+import { useShareLink } from "@/features/editor/hooks/useShareLink";
 
 interface MobileEditorControlsProps {
   activePanel: number;
@@ -37,11 +42,6 @@ interface MobileEditorControlsProps {
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-}
-
-function blurActiveElement() {
-  const activeElement = document.activeElement;
-  if (activeElement instanceof HTMLElement) activeElement.blur();
 }
 
 function InstallAction() {
@@ -85,22 +85,9 @@ function InstallAction() {
 }
 
 function MoreControls({ onClose }: { onClose: () => void }) {
-  const { storageValue, undo, redo, reset, canUndo, canRedo, isDefault } =
+  const { storageValue, undo, redo, canUndo, canRedo, isDefault } =
     useStorage();
-  const [shareState, setShareState] = useState<"idle" | "success" | "error">(
-    "idle",
-  );
-  const copyShareLink = async () => {
-    const url = createShareUrl(storageValue, window.location);
-    if (!url) return;
-    try {
-      await navigator.clipboard.writeText(url);
-      setShareState("success");
-    } catch {
-      setShareState("error");
-    }
-    window.setTimeout(() => setShareState("idle"), 2_000);
-  };
+  const { copyShareLink, shareState } = useShareLink();
   return (
     <div className="grid gap-2 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <div className="grid grid-cols-3 gap-2">
@@ -129,14 +116,9 @@ function MoreControls({ onClose }: { onClose: () => void }) {
           variant="outline"
           className="gap-1"
           disabled={isDefault}
-          onClick={() => {
-            if (
-              window.confirm(
-                "Reset all editor settings? You can undo this change.",
-              )
-            )
-              reset();
-          }}
+          onClick={(event) =>
+            dispatchEditorEvent(editorEvent.confirmReset, event.currentTarget)
+          }
         >
           <RotateCcw className="size-4" />
           Reset
@@ -148,8 +130,11 @@ function MoreControls({ onClose }: { onClose: () => void }) {
           variant="ghost"
           size="sm"
           className="h-11 gap-2 px-2 text-sm"
-          onClick={() =>
-            window.dispatchEvent(new Event("icon-maker:open-saved-designs"))
+          onClick={(event) =>
+            dispatchEditorEvent(
+              editorEvent.openSavedDesigns,
+              event.currentTarget,
+            )
           }
         >
           <Bookmark className="size-4 shrink-0" />
@@ -160,8 +145,8 @@ function MoreControls({ onClose }: { onClose: () => void }) {
           variant="ghost"
           size="sm"
           className="h-11 gap-2 px-2 text-sm"
-          onClick={() =>
-            window.dispatchEvent(new Event("icon-maker:open-brand-kits"))
+          onClick={(event) =>
+            dispatchEditorEvent(editorEvent.openBrandKits, event.currentTarget)
           }
         >
           <Palette className="size-4 shrink-0" />
@@ -172,8 +157,8 @@ function MoreControls({ onClose }: { onClose: () => void }) {
           variant="ghost"
           size="sm"
           className="h-11 gap-2 px-2 text-sm"
-          onClick={() =>
-            window.dispatchEvent(new Event("icon-maker:open-shortcuts"))
+          onClick={(event) =>
+            dispatchEditorEvent(editorEvent.openShortcuts, event.currentTarget)
           }
         >
           <Keyboard className="size-4 shrink-0" />
@@ -216,29 +201,121 @@ export function MobileEditorControls({
 }: MobileEditorControlsProps) {
   const [moreOpen, setMoreOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
-  const selectPanel = (panel: number) => {
-    onPanelChange(panel);
-    blurActiveElement();
-    onOpenChange(true);
-  };
   return (
-    <>
-      <Drawer open={open} onOpenChange={onOpenChange}>
+    <nav
+      aria-label="Mobile editor controls"
+      className="fixed inset-x-0 bottom-0 z-30 flex border-t bg-background/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur md:hidden"
+    >
+      <Drawer
+        open={open && activePanel === 0}
+        onOpenChange={(nextOpen) => {
+          if (nextOpen) onPanelChange(0);
+          onOpenChange(nextOpen);
+        }}
+      >
+        <DrawerTrigger asChild>
+          <Button
+            type="button"
+            variant={activePanel === 0 ? "secondary" : "ghost"}
+            className="flex-1 gap-1 px-2"
+          >
+            <PencilRuler className="size-4" />
+            Icon
+          </Button>
+        </DrawerTrigger>
         <DrawerContent className="max-h-[82dvh] overscroll-contain">
           <DrawerHeader>
-            <DrawerTitle>
-              {activePanel === 0 ? "Icon controls" : "Background controls"}
-            </DrawerTitle>
+            <DrawerTitle>Icon controls</DrawerTitle>
             <DrawerDescription>
               Changes update the live preview immediately.
             </DrawerDescription>
           </DrawerHeader>
           <div className="min-h-0 overflow-y-auto px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-            {activePanel === 0 ? <IconController /> : <BackgroundController />}
+            <IconController />
+          </div>
+        </DrawerContent>
+      </Drawer>
+      <Drawer
+        open={open && activePanel === 1}
+        onOpenChange={(nextOpen) => {
+          if (nextOpen) onPanelChange(1);
+          onOpenChange(nextOpen);
+        }}
+      >
+        <DrawerTrigger asChild>
+          <Button
+            type="button"
+            variant={activePanel === 1 ? "secondary" : "ghost"}
+            className="flex-1 gap-1 px-2"
+          >
+            <Image className="size-4" />
+            Background
+          </Button>
+        </DrawerTrigger>
+        <DrawerContent className="max-h-[82dvh] overscroll-contain">
+          <DrawerHeader>
+            <DrawerTitle>Background controls</DrawerTitle>
+            <DrawerDescription>
+              Changes update the live preview immediately.
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="min-h-0 overflow-y-auto px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+            <BackgroundController />
+          </div>
+        </DrawerContent>
+      </Drawer>
+      <Drawer open={exportOpen} onOpenChange={setExportOpen}>
+        <DrawerTrigger asChild>
+          <Button type="button" variant="ghost" className="flex-1 gap-1 px-2">
+            Export
+          </Button>
+        </DrawerTrigger>
+        <DrawerContent className="max-h-[60dvh] overscroll-contain">
+          <DrawerHeader>
+            <DrawerTitle>Export</DrawerTitle>
+            <DrawerDescription>
+              Choose a quick PNG or configure a package.
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="grid gap-2 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+            <Button
+              type="button"
+              className="gap-1.5"
+              onClick={(event) =>
+                dispatchEditorEvent(
+                  editorEvent.quickExport,
+                  event.currentTarget,
+                )
+              }
+            >
+              <Download className="size-4" />
+              Download 1024 px PNG
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-1.5"
+              onClick={(event) =>
+                dispatchEditorEvent(editorEvent.openExport, event.currentTarget)
+              }
+            >
+              <Settings2 className="size-4" />
+              Advanced export
+            </Button>
           </div>
         </DrawerContent>
       </Drawer>
       <Drawer open={moreOpen} onOpenChange={setMoreOpen}>
+        <DrawerTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="More tools"
+          >
+            <Ellipsis className="size-4" />
+          </Button>
+        </DrawerTrigger>
         <DrawerContent className="max-h-[82dvh] overscroll-contain">
           <DrawerHeader>
             <DrawerTitle>More tools</DrawerTitle>
@@ -251,85 +328,6 @@ export function MobileEditorControls({
           </div>
         </DrawerContent>
       </Drawer>
-      <Drawer open={exportOpen} onOpenChange={setExportOpen}>
-        <DrawerContent className="max-h-[60dvh] overscroll-contain">
-          <DrawerHeader>
-            <DrawerTitle>Export</DrawerTitle>
-            <DrawerDescription>
-              Choose a quick PNG or configure a package.
-            </DrawerDescription>
-          </DrawerHeader>
-          <div className="grid gap-2 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-            <Button
-              type="button"
-              className="gap-1.5"
-              onClick={() =>
-                window.dispatchEvent(new Event("icon-maker:quick-export"))
-              }
-            >
-              <Download className="size-4" />
-              Download 1024 px PNG
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="gap-1.5"
-              onClick={() =>
-                window.dispatchEvent(new Event("icon-maker:open-export"))
-              }
-            >
-              <Settings2 className="size-4" />
-              Advanced export
-            </Button>
-          </div>
-        </DrawerContent>
-      </Drawer>
-      <nav
-        aria-label="Mobile editor controls"
-        className="fixed inset-x-0 bottom-0 z-30 flex border-t bg-background/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur md:hidden"
-      >
-        <Button
-          type="button"
-          variant={activePanel === 0 ? "secondary" : "ghost"}
-          className="flex-1 gap-1 px-2"
-          onClick={() => selectPanel(0)}
-        >
-          <PencilRuler className="size-4" />
-          Icon
-        </Button>
-        <Button
-          type="button"
-          variant={activePanel === 1 ? "secondary" : "ghost"}
-          className="flex-1 gap-1 px-2"
-          onClick={() => selectPanel(1)}
-        >
-          <Image className="size-4" />
-          Background
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          className="flex-1 gap-1 px-2"
-          onClick={() => {
-            blurActiveElement();
-            setExportOpen(true);
-          }}
-        >
-          Export
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label="More tools"
-          onClick={() => {
-            blurActiveElement();
-            setMoreOpen(true);
-          }}
-        >
-          <Ellipsis className="size-4" />
-        </Button>
-      </nav>
-    </>
+    </nav>
   );
 }

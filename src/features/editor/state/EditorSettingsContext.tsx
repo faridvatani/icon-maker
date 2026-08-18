@@ -10,9 +10,12 @@ import {
 import {
   defaultEditorSettings,
   editorSettingsEqual,
-  sanitizeEditorSettings,
   type EditorSettings,
 } from "@/features/editor/lib/editorSettings";
+import {
+  readPersistedEditorSettings,
+  writePersistedEditorSettings,
+} from "@/features/editor/lib/editorSettingsStorage";
 
 export type { EditorSettings } from "@/features/editor/lib/editorSettings";
 
@@ -46,12 +49,6 @@ type HistoryAction =
   | { type: "reset" }
   | { type: "apply"; settings: EditorSettings };
 
-const STORAGE_KEY = "icon-maker:settings:v4";
-const PREVIOUS_STORAGE_KEYS = [
-  "icon-maker:settings:v3",
-  "icon-maker:settings:v2",
-  "value",
-];
 const HISTORY_LIMIT = 50;
 
 const StorageContext = createContext<StorageContextType | undefined>(undefined);
@@ -135,27 +132,13 @@ const historyReducer = (
 };
 
 const getInitialStorageValue = (): HistoryState => {
-  try {
-    const storedValue =
-      localStorage.getItem(STORAGE_KEY) ??
-      PREVIOUS_STORAGE_KEYS.map((key) => localStorage.getItem(key)).find(
-        Boolean,
-      ) ??
-      "{}";
-    return {
-      past: [],
-      present: sanitizeEditorSettings(JSON.parse(storedValue)),
-      future: [],
-      pendingBase: null,
-    };
-  } catch {
-    return {
-      past: [],
-      present: defaultEditorSettings,
-      future: [],
-      pendingBase: null,
-    };
-  }
+  const { settings } = readPersistedEditorSettings();
+  return {
+    past: [],
+    present: settings,
+    future: [],
+    pendingBase: null,
+  };
 };
 
 export function StorageProvider({ children }: { children: ReactNode }) {
@@ -187,7 +170,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(history.present));
+      writePersistedEditorSettings(history.present);
     }, 150);
     return () => window.clearTimeout(timeoutId);
   }, [history.present]);

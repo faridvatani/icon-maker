@@ -1,9 +1,12 @@
-import { useState } from "react";
 import { Redo2, RotateCcw, Share2, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useStorage } from "@/features/editor/state/EditorSettingsContext";
 import { isCustomIconValue } from "@/features/editor/lib/iconTypes";
-import { createShareUrl } from "@/features/editor/lib/share";
+import {
+  dispatchEditorEvent,
+  editorEvent,
+} from "@/features/editor/lib/editorEvents";
+import { useShareLink } from "@/features/editor/hooks/useShareLink";
 import {
   ExportDialog,
   QuickExportButton,
@@ -13,23 +16,9 @@ import { BrandKitDialog } from "@/features/editor/components/BrandKitDialog";
 import { KeyboardShortcutsDialog } from "@/features/editor/components/KeyboardShortcutsDialog";
 
 export const Header = () => {
-  const { storageValue, undo, redo, reset, canUndo, canRedo, isDefault } =
+  const { storageValue, undo, redo, canUndo, canRedo, isDefault } =
     useStorage();
-  const [shareState, setShareState] = useState<"idle" | "success" | "error">(
-    "idle",
-  );
-  const copyShareLink = async () => {
-    const url = createShareUrl(storageValue, window.location);
-    if (!url) return;
-    try {
-      await navigator.clipboard.writeText(url);
-      setShareState("success");
-    } catch (error) {
-      console.error("Could not copy share link", error);
-      setShareState("error");
-    }
-    window.setTimeout(() => setShareState("idle"), 2_000);
-  };
+  const { copyShareLink, shareState } = useShareLink();
   return (
     <header className="sticky top-0 z-10 flex h-14.25 items-center border-b bg-background/95 px-4 backdrop-blur">
       <div>
@@ -71,7 +60,9 @@ export const Header = () => {
           aria-label="Reset settings"
           title="Reset settings"
           disabled={isDefault}
-          onClick={reset}
+          onClick={(event) =>
+            dispatchEditorEvent(editorEvent.confirmReset, event.currentTarget)
+          }
         >
           <RotateCcw className="size-4" />
           <span className="hidden lg:inline">Reset</span>

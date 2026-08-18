@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import {
   defaultIconEffects,
@@ -8,6 +9,10 @@ import {
   IconEffects,
   IconShadow,
 } from "@/features/editor/lib/effects";
+import {
+  normalizeHexColor,
+  type HexColor,
+} from "@/features/editor/lib/styleValues";
 
 interface SliderFieldProps {
   label: string;
@@ -84,21 +89,17 @@ function ColorField({
   onChange,
 }: {
   label: string;
-  value: string | null;
-  onChange: (value: string | null) => void;
+  value: HexColor | null;
+  onChange: (value: HexColor | null) => void;
 }) {
   return (
     <label className="flex items-center justify-between gap-3 text-xs font-medium">
       {label}
       <span className="flex items-center gap-2">
-        <input
-          type="checkbox"
+        <Checkbox
           aria-label={`Enable ${label}`}
-          className="size-5 cursor-pointer rounded border-input accent-foreground"
           checked={Boolean(value)}
-          onChange={(event) =>
-            onChange(event.target.checked ? "#000000" : null)
-          }
+          onCheckedChange={(checked) => onChange(checked ? "#000000" : null)}
         />
         {value ? (
           <input
@@ -106,7 +107,9 @@ function ColorField({
             aria-label={`${label} color`}
             value={value}
             className="size-7 cursor-pointer rounded border bg-transparent p-0.5"
-            onChange={(event) => onChange(event.target.value)}
+            onChange={(event) =>
+              onChange(normalizeHexColor(event.target.value, "#000000"))
+            }
           />
         ) : null}
       </span>
@@ -325,7 +328,9 @@ export function IconEffectsControls({
                 value={shadow.color}
                 className="h-7 w-full"
                 onChange={(event) =>
-                  updateShadow(index, { color: event.target.value })
+                  updateShadow(index, {
+                    color: normalizeHexColor(event.target.value, "#000000"),
+                  })
                 }
               />
               <SliderField

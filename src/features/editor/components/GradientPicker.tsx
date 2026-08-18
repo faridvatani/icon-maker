@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { Check, ChevronLeft, ChevronRight, Paintbrush } from "lucide-react";
+import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { LayeredGradient } from "@/features/editor/components/LayeredGradient";
+import { LayeredGradient } from "@/features/editor/components/BackgroundRenderer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   CATEGORIES,
@@ -10,28 +11,27 @@ import {
   GRADIENTS_BY_ID,
   type Category,
 } from "@/features/editor/data/gradients";
-import {
-  BACKGROUND_IMAGES,
-  SOLID_PRESETS,
-} from "@/features/editor/data/backgroundPresets";
+import { SOLID_PRESETS } from "@/features/editor/data/backgroundPresets";
 import { cn } from "@/lib/utils";
 import {
   readRecents,
   recordRecentGradient,
 } from "@/features/editor/lib/recents";
-
-const IMAGE_PRESETS = BACKGROUND_IMAGES.map(({ name, file }) => ({
-  name,
-  background: `url("${import.meta.env.BASE_URL}backgrounds/${file}")`,
-}));
+import {
+  BUNDLED_BACKGROUND_PRESETS,
+  normalizeGradientId,
+  normalizeHexColor,
+  type BackgroundValue,
+  type GradientId,
+} from "@/features/editor/lib/styleValues";
 
 const PAGE_SIZE = 12;
 
 interface GradientPickerProps {
-  value: string;
-  gradientValue?: string | null;
-  onChange: (background: string) => void;
-  onGradientChange?: (gradientId: string) => void;
+  value: BackgroundValue;
+  gradientValue?: GradientId | null;
+  onChange: (background: BackgroundValue) => void;
+  onGradientChange?: (gradientId: GradientId) => void;
   className?: string;
   showRecents?: boolean;
 }
@@ -52,7 +52,7 @@ export function GradientPicker({
   const selectedGradient = gradientValue
     ? GRADIENTS_BY_ID.get(gradientValue)
     : undefined;
-  const selectedImage = IMAGE_PRESETS.find(
+  const selectedImage = BUNDLED_BACKGROUND_PRESETS.find(
     (image) => image.background === value,
   );
   const defaultTab = gradientValue
@@ -179,7 +179,11 @@ export function GradientPicker({
                     aria-label="Custom background color"
                     value={/^#[0-9a-f]{6}$/i.test(value) ? value : "#E2E2E2"}
                     className="h-8 w-12 cursor-pointer rounded border bg-transparent p-1"
-                    onChange={(event) => onChange(event.currentTarget.value)}
+                    onChange={(event) =>
+                      onChange(
+                        normalizeHexColor(event.currentTarget.value, "#E2E2E2"),
+                      )
+                    }
                   />
                 </label>
               </div>
@@ -197,21 +201,24 @@ export function GradientPicker({
                   <h3 className="text-xs font-medium">Recently used</h3>
                   <div className="grid grid-cols-2 gap-2">
                     {recentGradients.slice(0, 4).map((gradient) => (
-                      <button
+                      <motion.button
                         type="button"
                         key={`recent-${gradient.id}`}
                         aria-label={`Use gradient ${gradient.name}`}
                         className="relative h-14 overflow-hidden rounded-lg border text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        whileHover={{ y: -2 }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={() => {
                           recordRecentGradient(gradient.id);
-                          onGradientChange?.(gradient.id);
+                          const gradientId = normalizeGradientId(gradient.id);
+                          if (gradientId) onGradientChange?.(gradientId);
                         }}
                       >
                         <LayeredGradient gradientId={gradient.id} thumbnail />
                         <span className="absolute inset-x-0 bottom-0 bg-black/45 px-2 py-1 text-[11px] font-medium text-white">
                           {gradient.name}
                         </span>
-                      </button>
+                      </motion.button>
                     ))}
                   </div>
                 </section>
@@ -245,19 +252,22 @@ export function GradientPicker({
 
               <div className="grid grid-cols-2 gap-2">
                 {visibleGradients.map((gradient) => (
-                  <button
+                  <motion.button
                     type="button"
                     key={gradient.id}
                     aria-label={`Use gradient ${gradient.name}`}
                     aria-pressed={gradientValue === gradient.id}
                     className={cn(
-                      "relative h-20 overflow-hidden rounded-lg border text-left transition-transform active:scale-[0.98]",
+                      "relative h-20 overflow-hidden rounded-lg border text-left",
                       gradientValue === gradient.id &&
                         "ring-2 ring-foreground ring-offset-2",
                     )}
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => {
                       recordRecentGradient(gradient.id);
-                      onGradientChange?.(gradient.id);
+                      const gradientId = normalizeGradientId(gradient.id);
+                      if (gradientId) onGradientChange?.(gradientId);
                     }}
                   >
                     <LayeredGradient gradientId={gradient.id} thumbnail />
@@ -267,7 +277,7 @@ export function GradientPicker({
                     {gradientValue === gradient.id ? (
                       <Check className="absolute right-1.5 top-1.5 z-10 size-4 rounded-full bg-white p-0.5 text-black" />
                     ) : null}
-                  </button>
+                  </motion.button>
                 ))}
               </div>
 
@@ -321,7 +331,7 @@ export function GradientPicker({
               className="mt-3 min-h-0 overflow-y-auto pr-1"
             >
               <div className="grid grid-cols-2 gap-2">
-                {IMAGE_PRESETS.map(({ name, background }) => (
+                {BUNDLED_BACKGROUND_PRESETS.map(({ name, background }) => (
                   <button
                     type="button"
                     key={name}
@@ -345,8 +355,8 @@ export function GradientPicker({
 }
 
 interface RecentGradientSectionProps {
-  refreshKey: string | null | undefined;
-  onSelect: (gradientId: string) => void;
+  refreshKey: GradientId | null | undefined;
+  onSelect: (gradientId: GradientId) => void;
 }
 
 export function RecentGradientSection({
@@ -380,7 +390,8 @@ export function RecentGradientSection({
             className="relative h-20 overflow-hidden rounded-lg border text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             onClick={() => {
               recordRecentGradient(gradient.id);
-              onSelect(gradient.id);
+              const gradientId = normalizeGradientId(gradient.id);
+              if (gradientId) onSelect(gradientId);
             }}
           >
             <LayeredGradient gradientId={gradient.id} thumbnail />

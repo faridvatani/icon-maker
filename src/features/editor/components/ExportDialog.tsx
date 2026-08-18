@@ -1,6 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Download, Loader2, Settings2 } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { useEditorEvent } from "@/features/editor/hooks/useEditorEvent";
+import {
+  editorEvent,
+  getEditorEventFocusTarget,
+} from "@/features/editor/lib/editorEvents";
 import {
   Dialog,
   DialogContent,
@@ -13,43 +22,55 @@ import {
 import { CANVAS_TARGETS, isCanvasSize } from "@/features/editor/lib/canvas";
 import {
   defaultExportOptions,
+  ExportWorkloadError,
   exportPreviewAsPng,
   exportPreviewsAsZip,
   preloadPngExporter,
   type BatchExportOptions,
 } from "@/features/editor/lib/exportPng";
+import { usePreviewElement } from "@/features/editor/state/PreviewElementContext";
 
 type ExportState = "idle" | "exporting" | "success" | "error";
-
-const getPreview = () => {
-  const preview = document.querySelector("#logo-preview");
-  return preview instanceof HTMLElement ? preview : null;
-};
+type QuickExportState = "idle" | "exporting" | "error";
 
 export function QuickExportButton({ className }: { className?: string }) {
-  const [state, setState] = useState<ExportState>("idle");
+  const [state, setState] = useState<QuickExportState>("idle");
+  const [announcement, setAnnouncement] = useState("");
   const timeoutRef = useRef<number | undefined>(undefined);
-  const exportQuickPng = async () => {
-    const preview = getPreview();
-    if (!preview || state === "exporting") return;
+  const isExportingRef = useRef(false);
+  const { getPreviewElement } = usePreviewElement();
+  const exportQuickPng = useCallback(async () => {
+    const preview = getPreviewElement();
+    if (!preview || isExportingRef.current) return;
+    isExportingRef.current = true;
+    if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
     setState("exporting");
     try {
       await exportPreviewAsPng(preview, defaultExportOptions);
-      setState("success");
-      timeoutRef.current = window.setTimeout(() => setState("idle"), 2_000);
+      setState("idle");
+      setAnnouncement("PNG downloaded.");
+      timeoutRef.current = window.setTimeout(() => setAnnouncement(""), 2_000);
     } catch (error) {
       console.error("PNG export failed", error);
       setState("error");
       timeoutRef.current = window.setTimeout(() => setState("idle"), 3_000);
+    } finally {
+      isExportingRef.current = false;
     }
-  };
-  useEffect(() => {
-    window.addEventListener("icon-maker:quick-export", exportQuickPng);
-    return () => {
-      window.removeEventListener("icon-maker:quick-export", exportQuickPng);
+  }, [getPreviewElement]);
+  useEditorEvent(editorEvent.quickExport, exportQuickPng);
+  useEffect(
+    () => () => {
       if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
-    };
-  });
+    },
+    [],
+  );
+  const statusLabel =
+    state === "exporting"
+      ? "Exporting…"
+      : state === "error"
+        ? "Try export again"
+        : "Export PNG";
   return (
     <Button
       type="button"
@@ -60,18 +81,26 @@ export function QuickExportButton({ className }: { className?: string }) {
       onClick={() => void exportQuickPng()}
       disabled={state === "exporting"}
     >
-      {state === "success" ? (
-        <Check className="size-4" />
-      ) : (
-        <Download className="size-4" />
-      )}
-      {state === "exporting"
-        ? "Exporting…"
-        : state === "success"
-          ? "PNG downloaded"
-          : state === "error"
-            ? "Try export again"
-            : "Export PNG"}
+      <AnimatePresence initial={false} mode="wait">
+        <motion.span
+          key={state}
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.14, ease: "easeOut" }}
+          className="flex items-center gap-1.5"
+        >
+          {state === "exporting" ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Download className="size-4" />
+          )}
+          {statusLabel}
+        </motion.span>
+      </AnimatePresence>
+      <span role="status" className="sr-only" aria-live="polite">
+        {announcement}
+      </span>
     </Button>
   );
 }
@@ -84,13 +113,14 @@ export function ExportDialog() {
   });
   const [customSize, setCustomSize] = useState("");
   const [state, setState] = useState<ExportState>("idle");
+  const [errorMessage, setErrorMessage] = useState("");
   const [progress, setProgress] = useState({ completed: 0, total: 0 });
-  useEffect(() => {
-    const openDialog = () => setOpen(true);
-    window.addEventListener("icon-maker:open-export", openDialog);
-    return () =>
-      window.removeEventListener("icon-maker:open-export", openDialog);
-  }, []);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
+  const { getPreviewElement } = usePreviewElement();
+  useEditorEvent(editorEvent.openExport, (event) => {
+    returnFocusRef.current = getEditorEventFocusTarget(event);
+    setOpen(true);
+  });
   const toggleSize = (size: number) =>
     setOptions((current) => ({
       ...current,
@@ -112,10 +142,11 @@ export function ExportDialog() {
     setCustomSize("");
   };
   const exportBatch = async () => {
-    const preview = getPreview();
+    const preview = getPreviewElement();
     if (!preview || !options.sizes.length || !options.backgrounds.length)
       return;
     setState("exporting");
+    setErrorMessage("");
     setProgress({
       completed: 0,
       total: options.sizes.length * options.backgrounds.length,
@@ -130,8 +161,13 @@ export function ExportDialog() {
         setState("idle");
       }, 1_200);
     } catch (error) {
-      console.error("Batch export failed", error);
+      if (!(error instanceof ExportWorkloadError)) {
+        console.error("Batch export failed", error);
+      }
       setState("error");
+      setErrorMessage(
+        error instanceof Error ? error.message : "Try the export again.",
+      );
     }
   };
   const assetCount = options.sizes.length * options.backgrounds.length;
@@ -149,7 +185,16 @@ export function ExportDialog() {
           Advanced export
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90dvh] max-w-lg overflow-y-auto">
+      <DialogContent
+        className="max-h-[90dvh] max-w-lg overflow-y-auto"
+        onCloseAutoFocus={(event) => {
+          const target = returnFocusRef.current;
+          returnFocusRef.current = null;
+          if (!target?.isConnected) return;
+          event.preventDefault();
+          target.focus();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Advanced export</DialogTitle>
           <DialogDescription>
@@ -178,7 +223,7 @@ export function ExportDialog() {
             ))}
           </div>
           <div className="flex gap-2">
-            <input
+            <Input
               aria-label="Custom canvas size"
               inputMode="numeric"
               type="number"
@@ -186,7 +231,7 @@ export function ExportDialog() {
               max="4096"
               value={customSize}
               placeholder="Custom size, 16–4096 px"
-              className="h-9 min-w-0 flex-1 rounded-md border bg-background px-3 text-sm"
+              className="h-9 min-w-0 flex-1"
               onChange={(event) => setCustomSize(event.target.value)}
             />
             <Button type="button" variant="outline" onClick={addCustomSize}>
@@ -201,10 +246,9 @@ export function ExportDialog() {
               key={background}
               className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm"
             >
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={options.backgrounds.includes(background)}
-                onChange={() => toggleBackground(background)}
+                onCheckedChange={() => toggleBackground(background)}
               />
               {background === "current"
                 ? "Use current background"
@@ -213,9 +257,10 @@ export function ExportDialog() {
           ))}
         </fieldset>
         {state === "error" ? (
-          <p role="alert" className="text-sm text-destructive">
-            Export failed. Try again.
-          </p>
+          <Alert variant="destructive">
+            <AlertTitle>Export failed</AlertTitle>
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
         ) : null}
         <DialogFooter>
           <Button

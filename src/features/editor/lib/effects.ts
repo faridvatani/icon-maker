@@ -1,7 +1,9 @@
+import { isHexColor, type HexColor } from "./styleValues";
+
 export type BlendMode = "normal" | "multiply" | "screen" | "overlay";
 
 export interface IconShadow {
-  color: string;
+  color: HexColor;
   x: number;
   y: number;
   blur: number;
@@ -9,17 +11,17 @@ export interface IconShadow {
 }
 
 export interface IconEffects {
-  fill: string | null;
+  fill: HexColor | null;
   strokeWidth: number;
-  outlineColor: string | null;
+  outlineColor: HexColor | null;
   outlineWidth: number;
   shadows: IconShadow[];
-  glowColor: string | null;
+  glowColor: HexColor | null;
   glowBlur: number;
   glowOpacity: number;
   opacity: number;
   blendMode: BlendMode;
-  duotoneColor: string | null;
+  duotoneColor: HexColor | null;
   duotoneOpacity: number;
 }
 
@@ -62,8 +64,6 @@ export const defaultBackgroundEffects: BackgroundEffects = {
   distortion: 0,
 };
 
-const isColor = (value: unknown): value is string =>
-  typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);
 const numberInRange = (
   value: unknown,
   fallback: number,
@@ -82,7 +82,7 @@ const sanitizeShadow = (value: unknown): IconShadow | null => {
   if (!value || typeof value !== "object") return null;
   const shadow = value as Record<string, unknown>;
   return {
-    color: isColor(shadow.color) ? shadow.color : "#000000",
+    color: isHexColor(shadow.color) ? shadow.color : "#000000",
     x: numberInRange(shadow.x, 0, -48, 48),
     y: numberInRange(shadow.y, 8, -48, 48),
     blur: numberInRange(shadow.blur, 16, 0, 96),
@@ -94,9 +94,11 @@ export const sanitizeIconEffects = (value: unknown): IconEffects => {
   if (!value || typeof value !== "object") return defaultIconEffects;
   const effects = value as Record<string, unknown>;
   return {
-    fill: isColor(effects.fill) ? effects.fill : null,
+    fill: isHexColor(effects.fill) ? effects.fill : null,
     strokeWidth: numberInRange(effects.strokeWidth, 2, 0.5, 8),
-    outlineColor: isColor(effects.outlineColor) ? effects.outlineColor : null,
+    outlineColor: isHexColor(effects.outlineColor)
+      ? effects.outlineColor
+      : null,
     outlineWidth: numberInRange(effects.outlineWidth, 0, 0, 12),
     shadows: Array.isArray(effects.shadows)
       ? effects.shadows
@@ -106,12 +108,14 @@ export const sanitizeIconEffects = (value: unknown): IconEffects => {
           })
           .slice(0, 3)
       : [],
-    glowColor: isColor(effects.glowColor) ? effects.glowColor : null,
+    glowColor: isHexColor(effects.glowColor) ? effects.glowColor : null,
     glowBlur: numberInRange(effects.glowBlur, 0, 0, 96),
     glowOpacity: numberInRange(effects.glowOpacity, 0, 0, 1),
     opacity: numberInRange(effects.opacity, 1, 0, 1),
     blendMode: blendMode(effects.blendMode),
-    duotoneColor: isColor(effects.duotoneColor) ? effects.duotoneColor : null,
+    duotoneColor: isHexColor(effects.duotoneColor)
+      ? effects.duotoneColor
+      : null,
     duotoneOpacity: numberInRange(effects.duotoneOpacity, 0, 0, 1),
   };
 };

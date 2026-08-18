@@ -5,7 +5,7 @@ export interface ContrastResult {
   suggestions: Array<"#000000" | "#ffffff">;
 }
 
-const hexToRgb = (color: string) => {
+const hexToRgb = (color: HexColor) => {
   const matched = /^#([0-9a-f]{6})$/i.exec(color);
   if (!matched) return null;
   const value = Number.parseInt(matched[1], 16);
@@ -30,7 +30,7 @@ const contrastRatio = (foreground: number, background: number) =>
 
 export const assessContrast = (
   pixels: Uint8ClampedArray,
-  currentColor = "#000000",
+  currentColor: HexColor = "#000000",
 ): ContrastResult => {
   let blackWorst = Infinity;
   let whiteWorst = Infinity;
@@ -61,3 +61,4 @@ export const assessContrast = (
         : ["#000000", "#ffffff"],
   };
 };
+import type { HexColor } from "./styleValues";

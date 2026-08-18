@@ -1,6 +1,17 @@
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { Bookmark, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +22,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useEditorEvent } from "@/features/editor/hooks/useEditorEvent";
+import {
+  editorEvent,
+  getEditorEventFocusTarget,
+} from "@/features/editor/lib/editorEvents";
 import { useStorage } from "@/features/editor/state/EditorSettingsContext";
 import {
   createPreset,
@@ -30,28 +46,27 @@ export function PresetDialog({
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [presets, setPresets] = useState<SavedPreset[]>([]);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (nextOpen) setPresets(readPresets());
     setOpen(nextOpen);
   };
-  useEffect(() => {
-    const openDialog = () => handleOpenChange(true);
-    window.addEventListener("icon-maker:open-saved-designs", openDialog);
-    return () =>
-      window.removeEventListener("icon-maker:open-saved-designs", openDialog);
+  useEditorEvent(editorEvent.openSavedDesigns, (event) => {
+    returnFocusRef.current = getEditorEventFocusTarget(event);
+    handleOpenChange(true);
   });
 
   const savePreset = () => {
     const next = [createPreset(name, storageValue), ...presets];
-    writePresets(next);
+    if (!writePresets(next).ok) return;
     setPresets(next);
     setName("");
   };
 
   const deletePreset = (id: string) => {
     const next = presets.filter((preset) => preset.id !== id);
-    writePresets(next);
+    if (!writePresets(next).ok) return;
     setPresets(next);
   };
 
@@ -72,7 +87,16 @@ export function PresetDialog({
           </Button>
         </DialogTrigger>
       ) : null}
-      <DialogContent className="max-w-md">
+      <DialogContent
+        className="max-w-md"
+        onCloseAutoFocus={(event) => {
+          const target = returnFocusRef.current;
+          returnFocusRef.current = null;
+          if (!target?.isConnected) return;
+          event.preventDefault();
+          target.focus();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Saved designs</DialogTitle>
           <DialogDescription>
@@ -112,15 +136,38 @@ export function PresetDialog({
                 >
                   {preset.name}
                 </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label={`Delete ${preset.name}`}
-                  onClick={() => deletePreset(preset.id)}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Delete ${preset.name}`}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Delete “{preset.name}”?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This removes the saved design from this browser. This
+                        action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        onClick={() => deletePreset(preset.id)}
+                      >
+                        Delete saved design
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             ))
           ) : (

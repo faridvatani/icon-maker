@@ -6,11 +6,15 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { SOLID_PRESETS } from "@/features/editor/data/backgroundPresets";
+import {
+  normalizeHexColor,
+  type HexColor,
+} from "@/features/editor/lib/styleValues";
 import { cn } from "@/lib/utils";
 
 interface SolidColorPickerProps {
-  value: string;
-  onChange: (color: string) => void;
+  value: HexColor;
+  onChange: (color: HexColor) => void;
   className?: string;
 }
 
@@ -73,7 +77,9 @@ export function SolidColorPicker({
             aria-label="Custom color"
             value={/^#[0-9a-f]{6}$/i.test(value) ? value : "#09203f"}
             className="h-8 w-12 cursor-pointer rounded border bg-transparent p-1"
-            onChange={(event) => onChange(event.currentTarget.value)}
+            onChange={(event) =>
+              onChange(normalizeHexColor(event.currentTarget.value, "#09203f"))
+            }
           />
         </label>
       </PopoverContent>

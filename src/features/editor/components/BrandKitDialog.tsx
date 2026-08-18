@@ -1,7 +1,18 @@
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { Palette, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +30,11 @@ import {
   type BrandKit,
 } from "@/features/editor/lib/brandKits";
 import { defaultExportOptions } from "@/features/editor/lib/exportPng";
+import { useEditorEvent } from "@/features/editor/hooks/useEditorEvent";
+import {
+  editorEvent,
+  getEditorEventFocusTarget,
+} from "@/features/editor/lib/editorEvents";
 
 export function BrandKitDialog({
   showLabel = false,
@@ -33,22 +49,19 @@ export function BrandKitDialog({
   const [kits, setKits] = useState<BrandKit[]>([]);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renamedValue, setRenamedValue] = useState("");
+  const returnFocusRef = useRef<HTMLElement | null>(null);
   const sync = () => setKits(readBrandKits());
-  useEffect(() => {
-    const openDialog = () => {
-      sync();
-      setOpen(true);
-    };
-    window.addEventListener("icon-maker:open-brand-kits", openDialog);
-    return () =>
-      window.removeEventListener("icon-maker:open-brand-kits", openDialog);
+  useEditorEvent(editorEvent.openBrandKits, (event) => {
+    returnFocusRef.current = getEditorEventFocusTarget(event);
+    sync();
+    setOpen(true);
   });
   const save = () => {
     const next = [
       createBrandKit(name, storageValue, defaultExportOptions),
       ...kits,
     ];
-    writeBrandKits(next);
+    if (!writeBrandKits(next).ok) return;
     setKits(next);
     setName("");
   };
@@ -59,7 +72,7 @@ export function BrandKitDialog({
         ? { ...kit, name: renamedValue.trim().slice(0, 48) || kit.name }
         : kit,
     );
-    writeBrandKits(next);
+    if (!writeBrandKits(next).ok) return;
     setKits(next);
     setRenamingId(null);
   };
@@ -86,7 +99,16 @@ export function BrandKitDialog({
           </Button>
         </DialogTrigger>
       ) : null}
-      <DialogContent className="max-w-md">
+      <DialogContent
+        className="max-w-md"
+        onCloseAutoFocus={(event) => {
+          const target = returnFocusRef.current;
+          returnFocusRef.current = null;
+          if (!target?.isConnected) return;
+          event.preventDefault();
+          target.focus();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Brand kits</DialogTitle>
           <DialogDescription>
@@ -170,19 +192,40 @@ export function BrandKitDialog({
                 >
                   <Pencil className="size-4" />
                 </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label={`Delete ${kit.name}`}
-                  onClick={() => {
-                    const next = kits.filter(({ id }) => id !== kit.id);
-                    writeBrandKits(next);
-                    setKits(next);
-                  }}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Delete ${kit.name}`}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete “{kit.name}”?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This removes the brand kit from this browser. This
+                        action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        onClick={() => {
+                          const next = kits.filter(({ id }) => id !== kit.id);
+                          if (!writeBrandKits(next).ok) return;
+                          setKits(next);
+                        }}
+                      >
+                        Delete brand kit
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             ))
           ) : (

@@ -1,4 +1,3 @@
-import { zipSync } from "fflate";
 import {
   CANVAS_PRESETS,
   isCanvasSize,
@@ -7,6 +6,8 @@ import {
 } from "./canvas";
 
 export const EXPORT_SIZES = CANVAS_PRESETS;
+export const MAX_BATCH_EXPORT_ASSETS = CANVAS_PRESETS.length * 2;
+export const MAX_BATCH_EXPORT_PIXELS = 4096 * 4096 * 2;
 
 export interface ExportOptions {
   size: CanvasSize;
@@ -16,6 +17,23 @@ export interface ExportOptions {
 export interface BatchExportOptions {
   sizes: CanvasSize[];
   backgrounds: Array<ExportOptions["background"]>;
+}
+
+interface BatchExportAsset {
+  options: ExportOptions;
+  fileName: string;
+}
+
+export interface BatchExportPlan {
+  assets: BatchExportAsset[];
+  totalPixels: number;
+}
+
+export class ExportWorkloadError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ExportWorkloadError";
+  }
 }
 
 export const defaultExportOptions: ExportOptions = {
@@ -134,6 +152,36 @@ const createPngBlob = async (
 export const exportFileName = (options: ExportOptions) =>
   `icon-${options.size}${options.background === "transparent" ? "-transparent" : ""}.png`;
 
+export const createBatchExportPlan = (
+  options: BatchExportOptions,
+): BatchExportPlan => {
+  const normalized = normalizeBatchExportOptions(options);
+  const assets = normalized.sizes.flatMap((size) =>
+    normalized.backgrounds.map((background) => {
+      const exportOptions: ExportOptions = { size, background };
+      return {
+        options: exportOptions,
+        fileName: exportFileName(exportOptions),
+      };
+    }),
+  );
+  if (assets.length > MAX_BATCH_EXPORT_ASSETS) {
+    throw new ExportWorkloadError(
+      `Export up to ${MAX_BATCH_EXPORT_ASSETS} PNGs at a time. Reduce the selected sizes or background variants.`,
+    );
+  }
+  const totalPixels = assets.reduce(
+    (total, asset) => total + asset.options.size ** 2,
+    0,
+  );
+  if (totalPixels > MAX_BATCH_EXPORT_PIXELS) {
+    throw new ExportWorkloadError(
+      "The selected pixel workload is too large. Reduce large canvas sizes or background variants.",
+    );
+  }
+  return { assets, totalPixels };
+};
+
 export async function exportPreviewAsPng(
   node: HTMLElement,
   options: ExportOptions = defaultExportOptions,
@@ -146,22 +194,22 @@ export async function exportPreviewsAsZip(
   options: BatchExportOptions,
   onProgress?: (completed: number, total: number) => void,
 ): Promise<void> {
-  const normalized = normalizeBatchExportOptions(options);
+  const plan = createBatchExportPlan(options);
+  const zipperPromise = import("./zipExport");
   const files: Record<string, Uint8Array> = {};
-  const total = normalized.sizes.length * normalized.backgrounds.length;
+  const total = plan.assets.length;
   let completed = 0;
-  for (const size of normalized.sizes)
-    for (const background of normalized.backgrounds) {
-      const exportOptions: ExportOptions = { size, background };
-      files[exportFileName(exportOptions)] = new Uint8Array(
-        await (await createPngBlob(node, exportOptions)).arrayBuffer(),
-      );
-      completed += 1;
-      onProgress?.(completed, total);
-      await waitForPaint();
-    }
+  for (const asset of plan.assets) {
+    files[asset.fileName] = new Uint8Array(
+      await (await createPngBlob(node, asset.options)).arrayBuffer(),
+    );
+    completed += 1;
+    onProgress?.(completed, total);
+    await waitForPaint();
+  }
+  const { createZipArchive } = await zipperPromise;
   triggerDownload(
-    new Blob([zipSync(files)], { type: "application/zip" }),
+    new Blob([createZipArchive(files)], { type: "application/zip" }),
     "icon-maker-export.zip",
   );
 }

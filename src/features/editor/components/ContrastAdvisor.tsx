@@ -1,15 +1,21 @@
 import { useEffect, useState } from "react";
 import { Check, Sparkles, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  assessContrast,
-  type ContrastResult,
-} from "@/features/editor/lib/contrast";
+import { type ContrastResult } from "@/features/editor/lib/contrast";
+import { samplePreviewContrast } from "@/features/editor/lib/contrastSampling";
+import type { HexColor } from "@/features/editor/lib/styleValues";
+import { usePreviewElement } from "@/features/editor/state/PreviewElementContext";
 
 interface ContrastAdvisorProps {
   fingerprint: string;
-  currentColor: string;
-  onApply: (color: string) => void;
+  currentColor: HexColor;
+  onApply: (color: HexColor) => void;
+}
+
+interface CalculatedContrast {
+  fingerprint: string;
+  currentColor: HexColor;
+  value: ContrastResult;
 }
 
 export function ContrastAdvisor({
@@ -17,56 +23,39 @@ export function ContrastAdvisor({
   currentColor,
   onApply,
 }: ContrastAdvisorProps) {
-  const [result, setResult] = useState<ContrastResult>();
+  const [calculation, setCalculation] = useState<CalculatedContrast>();
+  const { getPreviewElement } = usePreviewElement();
   useEffect(() => {
+    let ownsResult = true;
     const timeout = window.setTimeout(() => {
       void (async () => {
-        const preview = document.querySelector("#logo-preview");
-        if (!(preview instanceof HTMLElement)) return;
-        const clone = preview.cloneNode(true) as HTMLElement;
-        clone.querySelector("[data-icon-layer]")?.remove();
-        clone.style.position = "fixed";
-        clone.style.left = "-9999px";
-        clone.style.width = "96px";
-        clone.style.height = "96px";
-        document.body.append(clone);
+        const preview = getPreviewElement();
+        if (!preview) return;
         try {
-          const { toCanvas } = await import("html-to-image");
-          const canvas = await toCanvas(clone, {
-            canvasWidth: 96,
-            canvasHeight: 96,
-            pixelRatio: 1,
-            skipAutoScale: true,
-          });
-          const context = canvas.getContext("2d", {
-            willReadFrequently: true,
-          });
-          if (!context) return;
-          const pixels = context.getImageData(0, 0, 96, 96).data;
-          const samples = new Uint8ClampedArray(36);
-          let offset = 0;
-          for (const coordinate of [16, 48, 80])
-            for (const other of [16, 48, 80]) {
-              samples.set(
-                pixels.subarray(
-                  (other * canvas.width + coordinate) * 4,
-                  (other * canvas.width + coordinate + 1) * 4,
-                ),
-                offset,
-              );
-              offset += 4;
-            }
-          setResult(assessContrast(samples, currentColor));
+          const nextResult = await samplePreviewContrast(preview, currentColor);
+          if (ownsResult) {
+            setCalculation({
+              fingerprint,
+              currentColor,
+              value: nextResult,
+            });
+          }
         } catch {
-          setResult(undefined);
-        } finally {
-          clone.remove();
+          if (ownsResult) setCalculation(undefined);
         }
       })();
     }, 300);
-    return () => window.clearTimeout(timeout);
-  }, [currentColor, fingerprint]);
+    return () => {
+      ownsResult = false;
+      window.clearTimeout(timeout);
+    };
+  }, [currentColor, fingerprint, getPreviewElement]);
 
+  const result =
+    calculation?.fingerprint === fingerprint &&
+    calculation.currentColor === currentColor
+      ? calculation.value
+      : undefined;
   if (!result) return null;
   const passes = result.currentRatio >= 4.5;
   return (

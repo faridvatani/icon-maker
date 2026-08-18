@@ -1,4 +1,9 @@
 import { sanitizeEditorSettings, type EditorSettings } from "./editorSettings";
+import {
+  normalizeSavedName,
+  readSavedCollection,
+  writeSavedCollection,
+} from "./savedCollections";
 
 const PRESETS_KEY = "icon-maker:presets:v1";
 const MAX_PRESETS = 24;
@@ -9,42 +14,32 @@ export interface SavedPreset {
   settings: EditorSettings;
 }
 
-const cleanName = (name: string) =>
-  name.trim().replace(/\s+/g, " ").slice(0, 48);
+const UNTITLED_PRESET = "Untitled preset";
 
-export const readPresets = (): SavedPreset[] => {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(PRESETS_KEY) ?? "[]");
-    if (!Array.isArray(parsed)) return [];
-    return parsed.flatMap((preset): SavedPreset[] => {
-      if (!preset || typeof preset !== "object") return [];
-      const record = preset as Record<string, unknown>;
-      if (typeof record.id !== "string" || typeof record.name !== "string")
-        return [];
-      return [
-        {
-          id: record.id,
-          name: cleanName(record.name) || "Untitled preset",
-          settings: sanitizeEditorSettings(record.settings),
-        },
-      ];
-    });
-  } catch {
-    return [];
-  }
+const normalizePreset = (value: unknown): SavedPreset | null => {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  if (typeof record.id !== "string" || typeof record.name !== "string")
+    return null;
+
+  return {
+    id: record.id,
+    name: normalizeSavedName(record.name, UNTITLED_PRESET),
+    settings: sanitizeEditorSettings(record.settings),
+  };
 };
 
+export const readPresets = (): SavedPreset[] =>
+  readSavedCollection(PRESETS_KEY, normalizePreset, MAX_PRESETS);
+
 export const writePresets = (presets: SavedPreset[]) =>
-  localStorage.setItem(
-    PRESETS_KEY,
-    JSON.stringify(presets.slice(0, MAX_PRESETS)),
-  );
+  writeSavedCollection(PRESETS_KEY, presets, normalizePreset, MAX_PRESETS);
 
 export const createPreset = (
   name: string,
   settings: EditorSettings,
 ): SavedPreset => ({
   id: crypto.randomUUID(),
-  name: cleanName(name) || "Untitled preset",
+  name: normalizeSavedName(name, UNTITLED_PRESET),
   settings,
 });

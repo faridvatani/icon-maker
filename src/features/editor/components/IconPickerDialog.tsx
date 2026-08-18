@@ -3,7 +3,6 @@ import { Check, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { icons } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
@@ -64,7 +63,7 @@ export default function IconPickerDialog({
   );
 
   return (
-    <DialogContent className="flex h-[min(760px,90vh)] max-w-4xl flex-col gap-0 overflow-hidden p-0">
+    <>
       <DialogHeader className="border-b px-6 py-5 pr-12">
         <DialogTitle>Choose an icon</DialogTitle>
         <DialogDescription>
@@ -183,6 +182,6 @@ export default function IconPickerDialog({
           </Button>
         </div>
       </div>
-    </DialogContent>
+    </>
   );
 }

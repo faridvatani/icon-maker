@@ -4,10 +4,12 @@ import { Drawer as DrawerPrimitive } from "vaul";
 import { cn } from "@/lib/utils";
 
 const Drawer = ({
+  autoFocus = true,
   shouldScaleBackground = true,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root>) => (
   <DrawerPrimitive.Root
+    autoFocus={autoFocus}
     shouldScaleBackground={shouldScaleBackground}
     {...props}
   />

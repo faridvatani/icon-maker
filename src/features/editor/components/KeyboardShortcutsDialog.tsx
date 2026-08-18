@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { Keyboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,6 +9,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useEditorEvent } from "@/features/editor/hooks/useEditorEvent";
+import {
+  editorEvent,
+  getEditorEventFocusTarget,
+} from "@/features/editor/lib/editorEvents";
 
 const shortcuts = [
   ["?", "Open this shortcut reference"],
@@ -28,12 +33,11 @@ export function KeyboardShortcutsDialog({
   showTrigger?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  useEffect(() => {
-    const openDialog = () => setOpen(true);
-    window.addEventListener("icon-maker:open-shortcuts", openDialog);
-    return () =>
-      window.removeEventListener("icon-maker:open-shortcuts", openDialog);
-  }, []);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
+  useEditorEvent(editorEvent.openShortcuts, (event) => {
+    returnFocusRef.current = getEditorEventFocusTarget(event);
+    setOpen(true);
+  });
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       {showTrigger ? (
@@ -51,7 +55,16 @@ export function KeyboardShortcutsDialog({
           </Button>
         </DialogTrigger>
       ) : null}
-      <DialogContent className="max-w-sm">
+      <DialogContent
+        className="max-w-sm"
+        onCloseAutoFocus={(event) => {
+          const target = returnFocusRef.current;
+          returnFocusRef.current = null;
+          if (!target?.isConnected) return;
+          event.preventDefault();
+          target.focus();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Keyboard shortcuts</DialogTitle>
           <DialogDescription>
