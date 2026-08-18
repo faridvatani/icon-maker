@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bookmark, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,7 +19,13 @@ import {
   type SavedPreset,
 } from "@/features/editor/lib/presets";
 
-export function PresetDialog() {
+export function PresetDialog({
+  showLabel = false,
+  showTrigger = true,
+}: {
+  showLabel?: boolean;
+  showTrigger?: boolean;
+}) {
   const { storageValue, applySettings } = useStorage();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -29,6 +35,12 @@ export function PresetDialog() {
     if (nextOpen) setPresets(readPresets());
     setOpen(nextOpen);
   };
+  useEffect(() => {
+    const openDialog = () => handleOpenChange(true);
+    window.addEventListener("icon-maker:open-saved-designs", openDialog);
+    return () =>
+      window.removeEventListener("icon-maker:open-saved-designs", openDialog);
+  });
 
   const savePreset = () => {
     const next = [createPreset(name, storageValue), ...presets];
@@ -45,22 +57,26 @@ export function PresetDialog() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="gap-1.5 px-2"
-        >
-          <Bookmark className="size-4" />
-          <span className="hidden sm:inline">Presets</span>
-        </Button>
-      </DialogTrigger>
+      {showTrigger ? (
+        <DialogTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 px-2"
+          >
+            <Bookmark className="size-4" />
+            <span className={showLabel ? "inline" : "hidden sm:inline"}>
+              Saved designs
+            </span>
+          </Button>
+        </DialogTrigger>
+      ) : null}
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Saved presets</DialogTitle>
+          <DialogTitle>Saved designs</DialogTitle>
           <DialogDescription>
-            Presets are saved only in this browser.
+            Save named snapshots of this design in this browser.
           </DialogDescription>
         </DialogHeader>
         <div className="flex gap-2">
@@ -68,7 +84,7 @@ export function PresetDialog() {
             aria-label="Preset name"
             value={name}
             maxLength={48}
-            placeholder="Preset name"
+            placeholder="Name this saved design"
             onChange={(event) => setName(event.currentTarget.value)}
             onKeyDown={(event) => {
               if (event.key === "Enter") savePreset();
@@ -109,7 +125,7 @@ export function PresetDialog() {
             ))
           ) : (
             <p className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
-              Save your first reusable design.
+              Save your first design snapshot.
             </p>
           )}
         </div>

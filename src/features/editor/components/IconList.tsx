@@ -12,6 +12,7 @@ import {
   deleteCustomIcon,
   saveCustomIcon,
 } from "@/features/editor/services/customIconStore";
+import { recordRecentIcon } from "@/features/editor/lib/recents";
 
 const IconPickerDialog = lazy(
   () => import("@/features/editor/components/IconPickerDialog"),
@@ -19,16 +20,21 @@ const IconPickerDialog = lazy(
 
 interface IconListProps {
   value: IconValue;
+  color: string;
   onIconSelect: (icon: IconValue) => void;
 }
 
-export function IconList({ value, onIconSelect }: IconListProps) {
+export function IconList({ value, color, onIconSelect }: IconListProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [uploadState, setUploadState] = useState<
     "idle" | "uploading" | "error"
   >("idle");
   const [uploadError, setUploadError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const selectIcon = (icon: IconValue) => {
+    recordRecentIcon(icon);
+    onIconSelect(icon);
+  };
 
   const handleFileChange = async (file: File | undefined) => {
     if (!file) return;
@@ -36,7 +42,7 @@ export function IconList({ value, onIconSelect }: IconListProps) {
     setUploadError("");
     try {
       const asset = await saveCustomIcon(file);
-      onIconSelect(asset.id);
+      selectIcon(asset.id);
       setUploadState("idle");
     } catch (error) {
       setUploadError(
@@ -51,7 +57,7 @@ export function IconList({ value, onIconSelect }: IconListProps) {
   const removeCustomIcon = async () => {
     if (!isCustomIconValue(value)) return;
     await deleteCustomIcon(value);
-    onIconSelect("FaceSlightlySmiling");
+    selectIcon("FaceSlightlySmiling");
   };
 
   return (
@@ -64,7 +70,7 @@ export function IconList({ value, onIconSelect }: IconListProps) {
         className="flex h-14 w-full max-w-55 items-center gap-3 rounded-lg border bg-background px-3 text-left transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted">
-          <Icon name={value} size={20} />
+          <Icon name={value} color={color} size={20} />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-medium">
@@ -135,7 +141,7 @@ export function IconList({ value, onIconSelect }: IconListProps) {
             <IconPickerDialog
               value={value}
               onSelect={(icon) => {
-                onIconSelect(icon);
+                selectIcon(icon);
                 setIsDialogOpen(false);
               }}
             />

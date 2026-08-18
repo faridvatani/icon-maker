@@ -46,8 +46,12 @@ type HistoryAction =
   | { type: "reset" }
   | { type: "apply"; settings: EditorSettings };
 
-const STORAGE_KEY = "icon-maker:settings:v3";
-const PREVIOUS_STORAGE_KEYS = ["icon-maker:settings:v2", "value"];
+const STORAGE_KEY = "icon-maker:settings:v4";
+const PREVIOUS_STORAGE_KEYS = [
+  "icon-maker:settings:v3",
+  "icon-maker:settings:v2",
+  "value",
+];
 const HISTORY_LIMIT = 50;
 
 const StorageContext = createContext<StorageContextType | undefined>(undefined);

@@ -1,6 +1,10 @@
 import { useStorage } from "@/features/editor/state/EditorSettingsContext";
 import { Slider } from "@/components/ui/slider";
-import { GradientPicker } from "@/features/editor/components/GradientPicker";
+import {
+  GradientPicker,
+  RecentGradientSection,
+} from "@/features/editor/components/GradientPicker";
+import { BackgroundEffectsControls } from "@/features/editor/components/EffectsControls";
 
 export const BackgroundController = () => {
   const {
@@ -9,7 +13,8 @@ export const BackgroundController = () => {
     previewStorageValue,
     commitStorageValue,
   } = useStorage();
-  const { bgRounded, bgPadding, bgColor, bgGradientId } = storageValue;
+  const { bgRounded, bgPadding, bgColor, bgGradientId, backgroundEffects } =
+    storageValue;
 
   return (
     <div className="grid w-full items-start gap-6">
@@ -66,6 +71,7 @@ export const BackgroundController = () => {
           <GradientPicker
             value={bgColor}
             gradientValue={bgGradientId}
+            showRecents={false}
             onChange={(value) =>
               updateStorageValue({ bgColor: value, bgGradientId: null })
             }
@@ -74,7 +80,21 @@ export const BackgroundController = () => {
             }
           />
         </div>
+        <RecentGradientSection
+          refreshKey={bgGradientId}
+          onSelect={(bgGradientId) => updateStorageValue({ bgGradientId })}
+        />
       </fieldset>
+      <BackgroundEffectsControls
+        value={backgroundEffects}
+        onPreview={(backgroundEffects) =>
+          previewStorageValue({ backgroundEffects })
+        }
+        onUpdate={(backgroundEffects) =>
+          updateStorageValue({ backgroundEffects })
+        }
+        onCommit={commitStorageValue}
+      />
     </div>
   );
 };

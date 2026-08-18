@@ -10,8 +10,12 @@ export const SOLID_PRESETS = [
 ] as const;
 
 export const BACKGROUND_IMAGES = [
-  { name: "Aurora", file: "aurora.svg" },
+  { name: "Nebula", file: "nebula.svg" },
   { name: "Sunset", file: "sunset.svg" },
   { name: "Lagoon", file: "lagoon.svg" },
   { name: "Midnight", file: "midnight.svg" },
+  { name: "Ember", file: "ember.svg" },
+  { name: "Tide", file: "tide.svg" },
+  { name: "Velvet", file: "velvet.svg" },
+  { name: "Cloudline", file: "cloudline.svg" },
 ] as const;

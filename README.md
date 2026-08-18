@@ -11,13 +11,14 @@ gradient, and export a production-size PNG.
 - Searchable, on-demand catalog with 1,767 icons
 - 206 locally bundled layered gradients with no runtime network dependency
 - Solid colors and bundled image backgrounds
-- Live size, rotation, padding, and corner-radius controls
-- Undo, redo, reset, and keyboard history shortcuts
+- Live size, rotation, padding, corner-radius, icon, and background-effect controls
+- Smart contrast guidance with one-click icon-color suggestions
+- Undo, redo, reset, and a discoverable keyboard-shortcut overlay
 - Local SVG icon import with strict sanitization and device-only storage
-- PNG export at 512, 1024, and 2048 pixels, including transparent icon-only output
-- Browser-local named presets and share links for built-in designs
+- ZIP export for standard app/avatar canvases or custom 16–4096px square assets, including transparent variants
+- Browser-local named presets, brand kits, recents, and share links for built-in designs
 - Versioned local persistence with validated settings
-- Responsive controls and accessible keyboard interactions
+- Installable PWA with network-first updates, responsive controls, and mobile bottom sheets
 
 ## Stack
 

@@ -1,67 +1,23 @@
-import { lazy, Suspense, useEffect, useState } from "react";
-import { Redo2, RotateCcw, Share2, Settings, Undo2 } from "lucide-react";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
+import { useState } from "react";
+import { Redo2, RotateCcw, Share2, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useStorage } from "@/features/editor/state/EditorSettingsContext";
 import { isCustomIconValue } from "@/features/editor/lib/iconTypes";
 import { createShareUrl } from "@/features/editor/lib/share";
-
-import { IconController } from "@/features/editor/components/IconController";
-import { ExportDialog } from "@/features/editor/components/ExportDialog";
+import {
+  ExportDialog,
+  QuickExportButton,
+} from "@/features/editor/components/ExportDialog";
 import { PresetDialog } from "@/features/editor/components/PresetDialog";
+import { BrandKitDialog } from "@/features/editor/components/BrandKitDialog";
+import { KeyboardShortcutsDialog } from "@/features/editor/components/KeyboardShortcutsDialog";
 
-const BackgroundController = lazy(() =>
-  import("@/features/editor/components/BackgroundController").then(
-    (module) => ({
-      default: module.BackgroundController,
-    }),
-  ),
-);
-
-interface HeaderProps {
-  selectedIndex: number;
-}
-
-export const Header = ({ selectedIndex }: HeaderProps) => {
+export const Header = () => {
   const { storageValue, undo, redo, reset, canUndo, canRedo, isDefault } =
     useStorage();
   const [shareState, setShareState] = useState<"idle" | "success" | "error">(
     "idle",
   );
-
-  useEffect(() => {
-    const handleHistoryShortcut = (event: KeyboardEvent) => {
-      if (
-        !(event.metaKey || event.ctrlKey) ||
-        event.key.toLowerCase() !== "z"
-      ) {
-        return;
-      }
-      const target = event.target;
-      if (
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLTextAreaElement ||
-        target instanceof HTMLSelectElement
-      ) {
-        return;
-      }
-
-      event.preventDefault();
-      if (event.shiftKey) redo();
-      else undo();
-    };
-
-    window.addEventListener("keydown", handleHistoryShortcut);
-    return () => window.removeEventListener("keydown", handleHistoryShortcut);
-  }, [redo, undo]);
-
   const copyShareLink = async () => {
     const url = createShareUrl(storageValue, window.location);
     if (!url) return;
@@ -74,34 +30,17 @@ export const Header = ({ selectedIndex }: HeaderProps) => {
     }
     window.setTimeout(() => setShareState("idle"), 2_000);
   };
-
   return (
-    <header className="sticky top-0 z-10 flex h-14.25 items-center gap-1 border-b bg-background px-4">
-      <h1 className="text-xl font-semibold">Icon Maker</h1>
-      <Drawer>
-        <DrawerTrigger asChild>
-          <Button variant="ghost" size="icon" className="md:hidden">
-            <Settings className="size-4" />
-            <span className="sr-only">Settings</span>
-          </Button>
-        </DrawerTrigger>
-        <DrawerContent className="max-h-[80vh]">
-          <DrawerHeader>
-            <DrawerTitle>Configuration</DrawerTitle>
-            <DrawerDescription>
-              Configure the settings for the icon and background
-            </DrawerDescription>
-          </DrawerHeader>
-          {selectedIndex === 0 ? (
-            <IconController />
-          ) : (
-            <Suspense fallback={null}>
-              <BackgroundController />
-            </Suspense>
-          )}
-        </DrawerContent>
-      </Drawer>
-      <div className="ml-auto flex items-center gap-1">
+    <header className="sticky top-0 z-10 flex h-14.25 items-center border-b bg-background/95 px-4 backdrop-blur">
+      <div>
+        <h1 className="text-lg font-semibold tracking-tight sm:text-xl">
+          Icon Maker
+        </h1>
+        <p className="hidden text-xs text-muted-foreground lg:block">
+          A local studio for crisp square assets
+        </p>
+      </div>
+      <div className="ml-auto hidden items-center gap-1 md:flex">
         <Button
           type="button"
           variant="ghost"
@@ -135,9 +74,8 @@ export const Header = ({ selectedIndex }: HeaderProps) => {
           onClick={reset}
         >
           <RotateCcw className="size-4" />
-          <span className="hidden sm:inline">Reset</span>
+          <span className="hidden lg:inline">Reset</span>
         </Button>
-        <PresetDialog />
         <Button
           type="button"
           variant="ghost"
@@ -152,7 +90,7 @@ export const Header = ({ selectedIndex }: HeaderProps) => {
           onClick={() => void copyShareLink()}
         >
           <Share2 className="size-4" />
-          <span className="hidden sm:inline">
+          <span className="hidden lg:inline">
             {shareState === "success"
               ? "Link copied"
               : shareState === "error"
@@ -160,8 +98,12 @@ export const Header = ({ selectedIndex }: HeaderProps) => {
                 : "Share"}
           </span>
         </Button>
+        <QuickExportButton />
         <ExportDialog />
       </div>
+      <PresetDialog showTrigger={false} />
+      <BrandKitDialog showTrigger={false} />
+      <KeyboardShortcutsDialog showTrigger={false} />
       <span role="status" className="sr-only" aria-live="polite">
         {shareState === "success"
           ? "Share link copied"

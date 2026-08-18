@@ -2,7 +2,7 @@
 
 ## Gradient dataset
 
-The gradient definitions in `src/lib/gradients.ts` are adapted from software
+The gradient definitions in `src/features/editor/data/gradients.ts` are adapted from software
 published by CristianOlivera1 at commit
 `5ac9db6d3d7c3031f216f25a6c8dc756075daef6`.
 

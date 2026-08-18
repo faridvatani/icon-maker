@@ -52,13 +52,18 @@ export function SolidColorPicker({
               key={color}
               aria-label={`Use solid color ${color}`}
               aria-pressed={value === color}
-              style={{ background: color }}
+              style={{ borderColor: value === color ? color : undefined }}
               className={cn(
-                "h-7 w-7 rounded-md border transition-transform active:scale-95",
-                value === color && "ring-2 ring-foreground ring-offset-2",
+                "flex size-8 items-center justify-center rounded-md border-2 border-input bg-background p-1 transition-transform active:scale-95",
               )}
               onClick={() => onChange(color)}
-            />
+            >
+              <span
+                aria-hidden="true"
+                className="size-full rounded-[3px]"
+                style={{ background: color }}
+              />
+            </button>
           ))}
         </div>
         <label className="mt-4 flex items-center justify-between gap-3 text-sm">

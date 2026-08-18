@@ -1,4 +1,12 @@
 import { normalizeIconValue, type IconValue } from "./iconTypes";
+import {
+  defaultBackgroundEffects,
+  defaultIconEffects,
+  sanitizeBackgroundEffects,
+  sanitizeIconEffects,
+  type BackgroundEffects,
+  type IconEffects,
+} from "./effects";
 
 export interface EditorSettings {
   icon: IconValue;
@@ -9,6 +17,8 @@ export interface EditorSettings {
   bgGradientId: string | null;
   bgRounded: number;
   bgPadding: number;
+  iconEffects: IconEffects;
+  backgroundEffects: BackgroundEffects;
 }
 
 export const defaultEditorSettings: EditorSettings = {
@@ -20,6 +30,8 @@ export const defaultEditorSettings: EditorSettings = {
   bgGradientId: null,
   bgRounded: 30,
   bgPadding: 10,
+  iconEffects: defaultIconEffects,
+  backgroundEffects: defaultBackgroundEffects,
 };
 
 const readString = (value: unknown, fallback: string) =>
@@ -44,7 +56,7 @@ export const sanitizeEditorSettings = (value: unknown): EditorSettings => {
     defaultEditorSettings.bgColor,
   );
   const bgColor = storedBackground.includes("images.unsplash.com")
-    ? `url("${import.meta.env.BASE_URL}backgrounds/aurora.svg")`
+    ? `url("${import.meta.env.BASE_URL}backgrounds/nebula.svg")`
     : storedBackground;
 
   return {
@@ -77,13 +89,12 @@ export const sanitizeEditorSettings = (value: unknown): EditorSettings => {
       0,
       100,
     ),
+    iconEffects: sanitizeIconEffects(stored.iconEffects),
+    backgroundEffects: sanitizeBackgroundEffects(stored.backgroundEffects),
   };
 };
 
 export const editorSettingsEqual = (
   left: EditorSettings,
   right: EditorSettings,
-) =>
-  (Object.keys(defaultEditorSettings) as Array<keyof EditorSettings>).every(
-    (key) => left[key] === right[key],
-  );
+) => JSON.stringify(left) === JSON.stringify(right);

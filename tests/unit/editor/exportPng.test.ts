@@ -8,9 +8,9 @@ describe("normalizeExportOptions", () => {
     ).toEqual({ size: 2048, background: "transparent" });
   });
 
-  it("falls back to the production default", () => {
+  it("accepts a valid custom square size and normalizes invalid backgrounds", () => {
     expect(normalizeExportOptions({ size: 300, background: "other" })).toEqual({
-      size: 1024,
+      size: 300,
       background: "current",
     });
   });

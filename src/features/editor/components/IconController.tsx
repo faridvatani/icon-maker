@@ -2,6 +2,8 @@ import { Slider } from "@/components/ui/slider";
 import { SolidColorPicker } from "@/features/editor/components/SolidColorPicker";
 import { useStorage } from "@/features/editor/state/EditorSettingsContext";
 import { IconList } from "@/features/editor/components/IconList";
+import { IconEffectsControls } from "@/features/editor/components/EffectsControls";
+import { ContrastAdvisor } from "@/features/editor/components/ContrastAdvisor";
 
 export const IconController = () => {
   const {
@@ -10,7 +12,7 @@ export const IconController = () => {
     previewStorageValue,
     commitStorageValue,
   } = useStorage();
-  const { icon, iconSize, iconRotate, iconColor } = storageValue;
+  const { icon, iconSize, iconRotate, iconColor, iconEffects } = storageValue;
 
   return (
     <div className="grid w-full items-start gap-6">
@@ -19,6 +21,7 @@ export const IconController = () => {
         <div className="grid gap-3">
           <IconList
             value={icon}
+            color={iconColor}
             onIconSelect={(icon) => updateStorageValue({ icon })}
           />
         </div>
@@ -64,6 +67,15 @@ export const IconController = () => {
             className="cursor-pointer"
           />
         </div>
+        <ContrastAdvisor
+          fingerprint={JSON.stringify({
+            bgColor: storageValue.bgColor,
+            bgGradientId: storageValue.bgGradientId,
+            backgroundEffects: storageValue.backgroundEffects,
+          })}
+          currentColor={iconColor}
+          onApply={(iconColor) => updateStorageValue({ iconColor })}
+        />
       </fieldset>
       <fieldset className="grid gap-6 rounded-lg border p-4">
         <legend className="-ml-1 px-1 text-sm font-medium">Colors</legend>
@@ -74,6 +86,12 @@ export const IconController = () => {
           />
         </div>
       </fieldset>
+      <IconEffectsControls
+        value={iconEffects}
+        onPreview={(iconEffects) => previewStorageValue({ iconEffects })}
+        onUpdate={(iconEffects) => updateStorageValue({ iconEffects })}
+        onCommit={commitStorageValue}
+      />
     </div>
   );
 };

@@ -16,6 +16,7 @@ import {
   type IconValue,
 } from "@/features/editor/lib/iconTypes";
 import { cn } from "@/lib/utils";
+import { readRecents } from "@/features/editor/lib/recents";
 
 const PAGE_SIZE = 48;
 const ICON_NAMES = Object.keys(icons) as CatalogIconName[];
@@ -50,6 +51,17 @@ export default function IconPickerDialog({
     activePage * PAGE_SIZE,
     (activePage + 1) * PAGE_SIZE,
   );
+  const recentIcons = useMemo(
+    () =>
+      readRecents()
+        .icons.filter(
+          (icon): icon is `library:${CatalogIconName}` =>
+            isCatalogIconValue(icon) &&
+            Boolean(icons[getCatalogIconName(icon)]),
+        )
+        .slice(0, 12),
+    [],
+  );
 
   return (
     <DialogContent className="flex h-[min(760px,90vh)] max-w-4xl flex-col gap-0 overflow-hidden p-0">
@@ -81,6 +93,29 @@ export default function IconPickerDialog({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
+        {!search && recentIcons.length ? (
+          <section className="mb-6">
+            <h3 className="mb-2 text-sm font-medium">Recently used</h3>
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8">
+              {recentIcons.map((icon) => {
+                const name = getCatalogIconName(icon);
+                const IconComponent = icons[name];
+                return (
+                  <button
+                    type="button"
+                    key={icon}
+                    aria-label={`Select ${name}`}
+                    className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-lg border bg-background text-[10px] hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onClick={() => onSelect(icon)}
+                  >
+                    <IconComponent className="size-5" />
+                    <span className="max-w-full truncate px-1">{name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        ) : null}
         {visibleIcons.length ? (
           <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8">
             {visibleIcons.map((name) => {

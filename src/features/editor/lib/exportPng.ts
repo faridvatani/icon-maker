@@ -1,11 +1,24 @@
-export const EXPORT_SIZES = [512, 1024, 2048] as const;
+import { zipSync } from "fflate";
+import {
+  CANVAS_PRESETS,
+  isCanvasSize,
+  normalizeCanvasSizes,
+  type CanvasSize,
+} from "./canvas";
+
+export const EXPORT_SIZES = CANVAS_PRESETS;
 
 export interface ExportOptions {
-  size: (typeof EXPORT_SIZES)[number];
+  size: CanvasSize;
   background: "current" | "transparent";
 }
 
-const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
+export interface BatchExportOptions {
+  sizes: CanvasSize[];
+  backgrounds: Array<ExportOptions["background"]>;
+}
+
+export const defaultExportOptions: ExportOptions = {
   size: 1024,
   background: "current",
 };
@@ -32,14 +45,35 @@ const triggerDownload = (blob: Blob, fileName: string) => {
 };
 
 export const normalizeExportOptions = (value: unknown): ExportOptions => {
-  if (!value || typeof value !== "object") return DEFAULT_EXPORT_OPTIONS;
+  if (!value || typeof value !== "object") return defaultExportOptions;
   const candidate = value as Record<string, unknown>;
   return {
-    size: EXPORT_SIZES.includes(candidate.size as ExportOptions["size"])
-      ? (candidate.size as ExportOptions["size"])
-      : DEFAULT_EXPORT_OPTIONS.size,
+    size: isCanvasSize(candidate.size)
+      ? candidate.size
+      : defaultExportOptions.size,
     background:
       candidate.background === "transparent" ? "transparent" : "current",
+  };
+};
+
+export const normalizeBatchExportOptions = (
+  value: unknown,
+): BatchExportOptions => {
+  if (!value || typeof value !== "object")
+    return {
+      sizes: [defaultExportOptions.size],
+      backgrounds: [defaultExportOptions.background],
+    };
+  const candidate = value as Record<string, unknown>;
+  const backgrounds = Array.isArray(candidate.backgrounds)
+    ? candidate.backgrounds.filter(
+        (background): background is ExportOptions["background"] =>
+          background === "current" || background === "transparent",
+      )
+    : [];
+  return {
+    sizes: normalizeCanvasSizes(candidate.sizes),
+    backgrounds: backgrounds.length ? [...new Set(backgrounds)] : ["current"],
   };
 };
 
@@ -66,10 +100,10 @@ export const preloadPngExporter = () => {
   void loadRenderer();
 };
 
-export async function exportPreviewAsPng(
+const createPngBlob = async (
   node: HTMLElement,
-  options: ExportOptions = DEFAULT_EXPORT_OPTIONS,
-): Promise<void> {
+  options: ExportOptions = defaultExportOptions,
+): Promise<Blob> => {
   const { toBlob } = await loadRenderer();
   await document.fonts.ready;
   await waitForPaint();
@@ -91,10 +125,43 @@ export async function exportPreviewAsPng(
     });
 
     if (!blob) throw new Error("The browser could not create the PNG file");
-
-    const suffix = options.background === "transparent" ? "-transparent" : "";
-    triggerDownload(blob, `icon-${options.size}${suffix}.png`);
+    return blob;
   } finally {
     if (exportNode !== node) exportNode.remove();
   }
+};
+
+export const exportFileName = (options: ExportOptions) =>
+  `icon-${options.size}${options.background === "transparent" ? "-transparent" : ""}.png`;
+
+export async function exportPreviewAsPng(
+  node: HTMLElement,
+  options: ExportOptions = defaultExportOptions,
+): Promise<void> {
+  triggerDownload(await createPngBlob(node, options), exportFileName(options));
+}
+
+export async function exportPreviewsAsZip(
+  node: HTMLElement,
+  options: BatchExportOptions,
+  onProgress?: (completed: number, total: number) => void,
+): Promise<void> {
+  const normalized = normalizeBatchExportOptions(options);
+  const files: Record<string, Uint8Array> = {};
+  const total = normalized.sizes.length * normalized.backgrounds.length;
+  let completed = 0;
+  for (const size of normalized.sizes)
+    for (const background of normalized.backgrounds) {
+      const exportOptions: ExportOptions = { size, background };
+      files[exportFileName(exportOptions)] = new Uint8Array(
+        await (await createPngBlob(node, exportOptions)).arrayBuffer(),
+      );
+      completed += 1;
+      onProgress?.(completed, total);
+      await waitForPaint();
+    }
+  triggerDownload(
+    new Blob([zipSync(files)], { type: "application/zip" }),
+    "icon-maker-export.zip",
+  );
 }
